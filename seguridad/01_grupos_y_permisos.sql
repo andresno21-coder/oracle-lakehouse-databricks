@@ -34,8 +34,13 @@ GRANT USE SCHEMA, SELECT ON SCHEMA ${catalogo}.gold TO `oi_consumidores_bi`;
 GRANT USE SCHEMA, SELECT ON SCHEMA ${catalogo}.gold    TO `oi_auditores`;
 GRANT USE SCHEMA, SELECT ON SCHEMA ${catalogo}.control TO `oi_auditores`;
 
--- Las ubicaciones externas solo las usa ingeniería
+-- Ubicaciones externas: solo ingeniería lee los insumos y escribe las tablas externas de cada capa
 GRANT READ FILES ON EXTERNAL LOCATION ext_oracle_raw TO `oi_ingenieros_datos`;
+GRANT READ FILES, WRITE FILES, CREATE EXTERNAL TABLE ON EXTERNAL LOCATION ext_oracle_bronze  TO `oi_ingenieros_datos`;
+GRANT READ FILES, WRITE FILES, CREATE EXTERNAL TABLE ON EXTERNAL LOCATION ext_oracle_silver  TO `oi_ingenieros_datos`;
+GRANT READ FILES, WRITE FILES, CREATE EXTERNAL TABLE ON EXTERNAL LOCATION ext_oracle_gold    TO `oi_ingenieros_datos`;
+GRANT READ FILES, WRITE FILES, CREATE EXTERNAL TABLE ON EXTERNAL LOCATION ext_oracle_control TO `oi_ingenieros_datos`;
+-- Evidencia: Catalog Explorer → External data → cada ubicación → "Test connection" en verde (guardar captura)
 
 -- COMMAND ----------
 

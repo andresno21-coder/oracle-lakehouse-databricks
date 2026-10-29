@@ -14,9 +14,9 @@
 from delta.tables import DeltaTable
 
 def upsert(df, destino: str, claves: list):
-    """MERGE por claves; si la tabla no existe se crea. Devuelve las filas del origen."""
-    if not spark.catalog.tableExists(destino):
-        df.write.format("delta").saveAsTable(destino)
+    """MERGE por claves sobre la tabla externa; si está vacía, inserción directa. Devuelve las filas del origen."""
+    if spark.table(destino).isEmpty():
+        escribir(df, destino)
     else:
         cond = " AND ".join(f"t.{c} = s.{c}" for c in claves)
         (DeltaTable.forName(spark, destino).alias("t").merge(df.alias("s"), cond)

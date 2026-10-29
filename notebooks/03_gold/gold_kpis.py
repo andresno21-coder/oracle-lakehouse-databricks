@@ -28,17 +28,16 @@ salidas = {
 }
 for nombre, df in salidas.items():
     destino = tabla("gold", nombre)
-    df.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(destino)
+    escribir(df, destino, sobrescribir=True)
     registrar_ejecucion(f"gold_{nombre}", destino, spark.table(destino).count())
 
 # COMMAND ----------
 
 # Vista de consumo para BI / Genie: última señal por activo con su KPI del año en curso
-spark.table(tabla("gold", "senales_estrategias_base")).createOrReplaceTempView("senales")
 ultima = (spark.table(tabla("gold", "senales_estrategias_base"))
                .groupBy("ticker").agg(F.max("fecha").alias("fecha")))
 vista = (spark.table(tabla("gold", "senales_estrategias_base")).join(ultima, ["ticker", "fecha"])
               .join(catalogo.select("ticker", "nombre", "sector", "tipo"), "ticker", "left")
               .join(kpi_activo.filter(F.col("anio") == F.year(F.current_date())).select("ticker", "rendimiento_anual", "volatilidad_anual", "max_drawdown"), "ticker", "left"))
-vista.write.format("delta").mode("overwrite").option("overwriteSchema", "true").saveAsTable(tabla("gold", "panel_activos"))
+escribir(vista, tabla("gold", "panel_activos"), sobrescribir=True)
 display(vista.orderBy("ticker"))

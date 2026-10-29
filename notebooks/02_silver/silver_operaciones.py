@@ -17,8 +17,8 @@ ops = tr.normalizar_operaciones(spark.table(tabla("bronze", "operaciones")), spa
 ops_ctx = tr.contexto_de_mercado(ops, spark.table(tabla("silver", "precios_diarios")))
 
 destino = tabla("silver", "operaciones")
-if not spark.catalog.tableExists(destino):
-    ops_ctx.write.format("delta").partitionBy("familia").saveAsTable(destino)
+if spark.table(destino).isEmpty():          # tabla externa particionada por familia (00_preparacion_ambiente)
+    escribir(ops_ctx, destino)
 else:
     (DeltaTable.forName(spark, destino).alias("t").merge(ops_ctx.alias("s"), "t.id_operacion = s.id_operacion")
                .whenMatchedUpdateAll().whenNotMatchedInsertAll().execute())
