@@ -1,0 +1,16 @@
+{
+ "bronze.precios": 104056,
+ "bronze.dividendos": 1486,
+ "bronze.catalogo": 35,
+ "bronze.mapa_futuros": 18,
+ "bronze.operaciones": 17169,
+ "silver.precios": 104056,
+ "silver.dividendos": 1486,
+ "silver.operaciones": 17169,
+ "silver.operaciones_sin_subyacente": 922,
+ "silver.precios_ohlc_inconsistente": 0,
+ "gold.kpis_activo_anual": 420,
+ "gold.kpis_sector_anual": 264,
+ "gold.kpis_estrategias": 50,
+ "gold.senales_estrategias_base": 22619
+}

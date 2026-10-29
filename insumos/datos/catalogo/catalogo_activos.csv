@@ -1,0 +1,36 @@
+ticker,nombre,tipo,sector,industria,capitalizacion_usd,moneda
+AAPL,Apple Inc.,Accion,Technology,Consumer Electronics,5099659198464.0,USD
+MSFT,Microsoft Corporation,Accion,Technology,Software - Infrastructure,3897780076544.0,USD
+NVDA,NVIDIA Corporation,Accion,Technology,Semiconductors,5163594022912.0,USD
+AMZN,"Amazon.com, Inc.",Accion,Consumer Cyclical,Internet Retail,2663140556800.0,USD
+GOOGL,Alphabet Inc.,Accion,Communication Services,Internet Content & Information,3490912665600.0,USD
+META,"Meta Platforms, Inc.",Accion,Communication Services,Internet Content & Information,1602130542592.0,USD
+JPM,JPMorgan Chase & Co.,Accion,Financial Services,Banks - Diversified,916009451520.0,USD
+XOM,ExxonMobil Holdings Corporation,Accion,Energy,Oil & Gas Integrated,746949378048.0,USD
+JNJ,Johnson & Johnson,Accion,Healthcare,Drug Manufacturers - General,660650196992.0,USD
+KO,The Coca-Cola Company,Accion,Consumer Defensive,Beverages - Non-Alcoholic,397409714176.0,USD
+PG,The Procter & Gamble Company,Accion,Consumer Defensive,Household & Personal Products,368527507456.0,USD
+HD,"The Home Depot, Inc.",Accion,Consumer Cyclical,Home Improvement Retail,324548427776.0,USD
+CVX,Chevron Corporation,Accion,Energy,Oil & Gas Integrated,450060451840.0,USD
+PEP,"PepsiCo, Inc.",Accion,Consumer Defensive,Beverages - Non-Alcoholic,181360410624.0,USD
+T,AT&T Inc.,Accion,Communication Services,Telecom Services,142578139136.0,USD
+SPY,State Street SPDR S&P 500 ETF Trust,ETF,ETF Large Blend,Large Blend,809216114688.0,USD
+QQQ,Invesco QQQ Trust,ETF,ETF Large Growth,Large Growth,498945982464.0,USD
+DIA,State Street SPDR Dow Jones Industrial Average ETF Trust,ETF,ETF Large Value,Large Value,43860340736.0,USD
+IWM,iShares Russell 2000 ETF,ETF,ETF Small Blend,Small Blend,78041726976.0,USD
+GLD,SPDR Gold Shares,ETF,ETF Commodities Focused,Commodities Focused,141702414336.0,USD
+TLT,iShares 20+ Year Treasury Bond ETF,ETF,ETF Long Government,Long Government,46233321472.0,USD
+USO,"United States Oil Fund, LP",ETF,ETF Commodities Focused,Commodities Focused,1690582144.0,USD
+XLF,State Street Financial Select Sector SPDR ETF,ETF,ETF Financial,Financial,50968727552.0,USD
+XLK,State Street Technology Select Sector SPDR ETF,ETF,ETF Technology,Technology,127297691648.0,USD
+XLE,State Street Energy Select Sector SPDR ETF,ETF,ETF Equity Energy,Equity Energy,39130157056.0,USD
+XLV,State Street Health Care Select Sector SPDR ETF,ETF,ETF Health,Health,43393187840.0,USD
+XLU,State Street Utilities Select Sector SPDR ETF,ETF,ETF Utilities,Utilities,21327450112.0,USD
+XLP,State Street Consumer Staples Select Sector SPDR ETF,ETF,ETF Consumer Defensive,Consumer Defensive,13445566464.0,USD
+XLY,State Street Consumer Discretionary Select Sector SPDR ETF,ETF,ETF Consumer Cyclical,Consumer Cyclical,21273047040.0,USD
+XLI,State Street Industrial Select Sector SPDR ETF,ETF,ETF Industrials,Industrials,29827448832.0,USD
+SLV,iShares Silver Trust,ETF,ETF Commodities Focused,Commodities Focused,29961824256.0,USD
+FXE,Invesco CurrencyShares Euro Currency Trust,ETF,ETF Single Currency,Single Currency,329840448.0,USD
+FXB,Invesco CurrencyShares British Pound Sterling Trust,ETF,ETF Single Currency,Single Currency,89011112.0,USD
+VIX,^VIX,Indice,Macro,Volatilidad,,USD
+TNX,^TNX,Indice,Macro,Tasas,,USD

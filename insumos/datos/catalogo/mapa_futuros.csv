@@ -1,0 +1,19 @@
+simbolo_futuro,nombre_futuro,ticker_subyacente,valor_punto_usd
+MES,Micro E-mini S&P 500,SPY,5.0
+ES,E-mini S&P 500,SPY,50.0
+MNQ,Micro E-mini Nasdaq-100,QQQ,2.0
+NQ,E-mini Nasdaq-100,QQQ,20.0
+MYM,Micro E-mini Dow,DIA,0.5
+YM,E-mini Dow,DIA,5.0
+M2K,Micro E-mini Russell 2000,IWM,5.0
+RTY,E-mini Russell 2000,IWM,50.0
+MGC,Micro Oro,GLD,10.0
+GC,Oro,GLD,100.0
+MCL,Micro Petróleo WTI,USO,100.0
+CL,Petróleo WTI,USO,1000.0
+SIL,Micro Plata,SLV,1000.0
+SI,Plata,SLV,5000.0
+6E,Euro FX,FXE,125000.0
+M6E,Micro Euro FX,FXE,12500.0
+6B,Libra esterlina,FXB,62500.0
+M6B,Micro Libra,FXB,6250.0

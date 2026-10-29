@@ -1,0 +1,6 @@
+command: ["streamlit", "run", "app.py"]
+env:
+  - name: CATALOGO
+    value: oracle_prd
+  - name: DATABRICKS_WAREHOUSE_ID
+    valueFrom: sql-warehouse   # recurso "SQL warehouse" asignado a la app en la UI de Databricks Apps

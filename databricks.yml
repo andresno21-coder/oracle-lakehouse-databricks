@@ -1,0 +1,41 @@
+# Databricks Asset Bundle: despliega notebooks, paquete src y el Job en dev y prod.
+# Por entorno solo cambian el catálogo y el host; esquemas y tablas se llaman igual.
+bundle:
+  name: oracle-lakehouse
+
+include:
+  - resources/*.yml
+
+variables:
+  catalogo:
+    description: Catálogo de Unity Catalog del entorno
+    default: oracle_dev
+  ruta_raw:
+    description: Contenedor raw en ADLS Gen2 (insumos)
+    default: abfss://raw@storacleinvestment.dfs.core.windows.net
+  correo_alertas:
+    description: Correo que recibe las fallas del Job
+    default: alertas@oracleinvestment.example
+  nodo:
+    description: Tipo de máquina del clúster del Job
+    default: Standard_DS3_v2
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-0000000000000000.0.azuredatabricks.net   # reemplazar por el host del workspace de desarrollo
+    variables:
+      catalogo: oracle_dev
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-0000000000000000.0.azuredatabricks.net   # reemplazar por el host del workspace productivo
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
+    variables:
+      catalogo: oracle_prd
+    # En producción el Job corre con un service principal, no con un usuario:
+    # run_as:
+    #   service_principal_name: <application-id del service principal sp-oracle-etl>
