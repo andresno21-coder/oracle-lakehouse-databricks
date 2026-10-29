@@ -5,7 +5,8 @@
 # MAGIC - **Time travel:** compara la versión actual de `precios_diarios` con la anterior (filas nuevas o corregidas).
 # MAGIC - **OPTIMIZE + ZORDER** en gold y **VACUUM** con la retención por defecto (7 días): nunca `RETAIN 0` en producción,
 # MAGIC   porque borra el historial y deja sin efecto el time travel.
-# MAGIC - **Respaldo:** `SHALLOW CLONE` de la tabla gold de estrategias antes de cada sobrescritura (solo metadatos).
+# MAGIC - **Respaldo:** `DEEP CLONE` de la tabla gold de estrategias en el contenedor `control` (las tablas son externas y
+# MAGIC   Unity Catalog solo permite `SHALLOW CLONE` sobre tablas administradas).
 
 # COMMAND ----------
 
@@ -41,10 +42,13 @@ for capa, t in [("silver", "precios_diarios"), ("silver", "operaciones"), ("gold
 
 # COMMAND ----------
 
-# Respaldo de la tabla gold de estrategias (clon superficial con fecha)
+# Respaldo de la tabla gold de estrategias (clon profundo con fecha, también como tabla externa).
+# En Unity Catalog SHALLOW CLONE solo admite tablas administradas; DEEP CLONE copia los datos a su propia ubicación.
 sufijo = dt.datetime.utcnow().strftime("%Y%m%d")
+cuenta = RUTA_RAW.split("@", 1)[1]
 spark.sql(f"CREATE OR REPLACE TABLE {tabla('control', 'respaldo_kpis_estrategias_' + sufijo)} "
-          f"SHALLOW CLONE {tabla('gold', 'kpis_estrategias')}")
+          f"DEEP CLONE {tabla('gold', 'kpis_estrategias')} "
+          f"LOCATION 'abfss://control@{cuenta}/{CATALOGO}/respaldos/kpis_estrategias_{sufijo}'")
 registrar_ejecucion("mantenimiento_delta", tabla("silver", "precios_diarios"), 0, detalle=f"versiones {versiones}")
 
 # COMMAND ----------

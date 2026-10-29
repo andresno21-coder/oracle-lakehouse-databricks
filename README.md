@@ -74,11 +74,17 @@ Los insumos se generan con `insumos/descargar_insumos.py` y se suben a ADLS con 
 | silver | `notebooks/02_silver/silver_operaciones.py` | **Join de tres fuentes**: operaciones + mapa de futuros + precio del subyacente y VIX → régimen de volatilidad. |
 | gold | `notebooks/03_gold/gold_kpis.py` | KPIs de activo y sector por año, KPIs de estrategia por régimen y señales E1/E2; vista `panel_activos`. |
 | control | `notebooks/04_calidad/controles_calidad.py` | 7 reglas de calidad; si falla una crítica, el Job no publica. |
-| control | `notebooks/04_calidad/mantenimiento_delta.py` | `DESCRIBE HISTORY/DETAIL`, **time travel** (qué cambió entre versiones), OPTIMIZE ZORDER, **VACUUM** con retención por defecto, respaldo con **SHALLOW CLONE** y procedimiento de **RESTORE**. |
+| control | `notebooks/04_calidad/mantenimiento_delta.py` | `DESCRIBE HISTORY/DETAIL`, **time travel** (qué cambió entre versiones), OPTIMIZE ZORDER, **VACUUM** con retención por defecto, respaldo con **DEEP CLONE** (UC solo permite SHALLOW CLONE en tablas administradas) y procedimiento de **RESTORE**. |
 | servir | `notebooks/05_servir/exportar_base_transaccional.py` | Copia gold a Azure SQL Database o PostgreSQL/Lakebase por JDBC con *secret scope*. |
 
 Toda la lógica vive en `src/oracle_lakehouse/transformaciones.py` (funciones puras de PySpark) y está cubierta por
 **pruebas unitarias** (`tests/`, 6 pruebas) que corren en GitHub Actions antes de cada despliegue.
+
+### Ejecución en Azure Databricks
+El Job corrió completo en Azure (dev y prod, **12/12 tareas OK**): 18 tablas externas en ADLS, ingesta idempotente
+(segunda corrida = 0 filas nuevas en bronze), 7 reglas de calidad cumplidas, exportación a Azure SQL, filtro de fila y
+máscara verificados por grupo, tablero publicado, Genie respondiendo y la app desplegada.
+Detalle y capturas en [`docs/evidencias/`](docs/evidencias/README.md).
 
 ### Resultado de la ejecución de validación (Spark local, datos reales)
 `docs/muestras/conteos_capas.json`: bronze 104.056 precios · silver 922 operaciones sin subyacente detectadas
