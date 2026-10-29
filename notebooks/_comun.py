@@ -23,10 +23,16 @@ from oracle_lakehouse import transformaciones as tr
 def tabla(capa: str, nombre: str) -> str:
     return f"{CATALOGO}.{capa}.{nombre}"
 
+def escribir(df, destino: str, sobrescribir: bool = False):
+    """Escribe en una tabla EXTERNA ya creada por 00_preparacion_ambiente (alinea las columnas por nombre).
+    No usa saveAsTable: así la tabla nunca se recrea como administrada y conserva su LOCATION en ADLS."""
+    columnas = spark.table(destino).columns
+    df.select(*columnas).write.insertInto(destino, overwrite=sobrescribir)
+
 def registrar_ejecucion(paso: str, tabla_destino: str, filas: int, estado: str = "OK", detalle: str = ""):
     """Bitácora de ejecuciones en control.ejecuciones (append)."""
     fila = [(dt.datetime.utcnow(), paso, tabla_destino, int(filas), estado, detalle)]
-    (spark.createDataFrame(fila, "fecha_utc timestamp, paso string, tabla string, filas long, estado string, detalle string")
-          .write.mode("append").saveAsTable(tabla("control", "ejecuciones")))
+    escribir(spark.createDataFrame(fila, "fecha_utc timestamp, paso string, tabla string, filas long, estado string, detalle string"),
+             tabla("control", "ejecuciones"))
 
 print(f"Catálogo: {CATALOGO} · Raw: {RUTA_RAW}")

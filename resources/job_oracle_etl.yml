@@ -9,6 +9,8 @@ resources:
         timezone_id: America/New_York
         pause_status: PAUSED                            # se activa en prod desde la UI o el bundle
       email_notifications:
+        on_start: [ "${var.correo_alertas}" ]
+        on_success: [ "${var.correo_alertas}" ]
         on_failure: [ "${var.correo_alertas}" ]
       parameters:
         - name: catalogo
@@ -29,53 +31,70 @@ resources:
           job_cluster_key: etl
           notebook_task:
             notebook_path: ../notebooks/00_preparacion/00_preparacion_ambiente.sql
+            base_parameters: { cuenta: storacleinvestment }
 
         - task_key: bronze_precios
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
+          min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
           notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: precios } }
         - task_key: bronze_dividendos
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
+          min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
           notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: dividendos } }
         - task_key: bronze_catalogo
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
+          min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
           notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: catalogo } }
         - task_key: bronze_mapa_futuros
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
+          min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
           notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: mapa_futuros } }
         - task_key: bronze_operaciones
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
+          min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
           notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: operaciones } }
 
         - task_key: silver_mercado
+          run_if: ALL_SUCCESS
           depends_on: [ { task_key: bronze_precios }, { task_key: bronze_dividendos }, { task_key: bronze_catalogo } ]
           job_cluster_key: etl
           notebook_task: { notebook_path: ../notebooks/02_silver/silver_mercado.py }
         - task_key: silver_operaciones
+          run_if: ALL_SUCCESS
           depends_on: [ { task_key: silver_mercado }, { task_key: bronze_operaciones }, { task_key: bronze_mapa_futuros } ]
           job_cluster_key: etl
           notebook_task: { notebook_path: ../notebooks/02_silver/silver_operaciones.py }
 
         - task_key: gold_kpis
+          run_if: ALL_SUCCESS
           depends_on: [ { task_key: silver_operaciones } ]
           job_cluster_key: etl
           notebook_task: { notebook_path: ../notebooks/03_gold/gold_kpis.py }
 
         - task_key: controles_calidad
+          run_if: ALL_SUCCESS
           depends_on: [ { task_key: gold_kpis } ]
           job_cluster_key: etl
           notebook_task: { notebook_path: ../notebooks/04_calidad/controles_calidad.py }
 
+        - task_key: mantenimiento_delta
+          run_if: ALL_SUCCESS
+          depends_on: [ { task_key: controles_calidad } ]
+          job_cluster_key: etl
+          notebook_task: { notebook_path: ../notebooks/04_calidad/mantenimiento_delta.py }
+
         - task_key: exportar_base_transaccional
+          run_if: ALL_SUCCESS
           depends_on: [ { task_key: controles_calidad } ]
           job_cluster_key: etl
           libraries:

@@ -68,5 +68,12 @@ g_sector.filter("anio = 2025").orderBy(F.desc("rendimiento_promedio")).toPandas(
 ult = g_senal.agg(F.max("fecha")).first()[0]
 g_senal.filter(F.col("fecha") == ult).orderBy("ticker").toPandas().round(3).to_csv(out / "gold_senales_ultimo_dia.csv", index=False)
 (out / "conteos_capas.json").write_text(json.dumps(conteos, indent=1, ensure_ascii=False), encoding="utf-8")
+
+# Esquemas reales de silver y gold (base para el DDL de 00_preparacion_ambiente.sql)
+esquemas = {n: [(f.name, f.dataType.simpleString()) for f in df.schema.fields] for n, df in {
+    "silver.catalogo_activos": s_cat, "silver.precios_diarios": s_precios, "silver.dividendos": s_div,
+    "silver.operaciones": s_ops, "gold.kpis_activo_anual": g_activo, "gold.kpis_sector_anual": g_sector,
+    "gold.kpis_estrategias": g_estr, "gold.senales_estrategias_base": g_senal}.items()}
+(out / "esquemas.json").write_text(json.dumps(esquemas, indent=1, ensure_ascii=False), encoding="utf-8")
 print("muestras en", out)
 spark.stop()

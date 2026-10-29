@@ -68,11 +68,13 @@ Los insumos se generan con `insumos/descargar_insumos.py` y se suben a ADLS con 
 
 | Capa | Notebook | Qué hace |
 |---|---|---|
+| preparación | `notebooks/00_preparacion/00_preparacion_ambiente.sql` | Ubicaciones externas por contenedor (Managed Identity), catálogo por entorno y **DDL de las 17 tablas como tablas EXTERNAS** en ADLS: si una tabla se elimina, los datos permanecen. |
 | bronze | `notebooks/01_bronze/ingesta_bronze.py` | Un notebook parametrizado para las 5 fuentes (tareas en paralelo). Esquema explícito, columnas de auditoría y **carga incremental idempotente** con `_metadata` (un archivo ya ingerido no se recarga). |
 | silver | `notebooks/02_silver/silver_mercado.py` | Tipado, deduplicación, rendimientos diarios, **join** con el catálogo, **MERGE** con la API Delta y `OPTIMIZE ZORDER`. |
 | silver | `notebooks/02_silver/silver_operaciones.py` | **Join de tres fuentes**: operaciones + mapa de futuros + precio del subyacente y VIX → régimen de volatilidad. |
 | gold | `notebooks/03_gold/gold_kpis.py` | KPIs de activo y sector por año, KPIs de estrategia por régimen y señales E1/E2; vista `panel_activos`. |
 | control | `notebooks/04_calidad/controles_calidad.py` | 7 reglas de calidad; si falla una crítica, el Job no publica. |
+| control | `notebooks/04_calidad/mantenimiento_delta.py` | `DESCRIBE HISTORY/DETAIL`, **time travel** (qué cambió entre versiones), OPTIMIZE ZORDER, **VACUUM** con retención por defecto, respaldo con **SHALLOW CLONE** y procedimiento de **RESTORE**. |
 | servir | `notebooks/05_servir/exportar_base_transaccional.py` | Copia gold a Azure SQL Database o PostgreSQL/Lakebase por JDBC con *secret scope*. |
 
 Toda la lógica vive en `src/oracle_lakehouse/transformaciones.py` (funciones puras de PySpark) y está cubierta por
@@ -83,13 +85,14 @@ Toda la lógica vive en `src/oracle_lakehouse/transformaciones.py` (funciones pu
 (cripto) · gold 420 KPIs de activo-año, 264 de sector-año, 50 de estrategia y 22.619 señales.
 
 ## Orquestación y CI/CD
-- **Job** `resources/job_oracle_etl.yml`: preparación → 5 ingestas bronze en paralelo (con reintentos) → silver → gold →
-  calidad → exportación. Programado de lunes a viernes a las 18:30 ET, con alerta por correo ante fallas.
+- **Job** `resources/job_oracle_etl.yml` (12 tareas): preparación → 5 ingestas bronze en paralelo (reintentos con espera) →
+  silver → gold → calidad → mantenimiento Delta y exportación (condición `ALL_SUCCESS`). Programado de lunes a viernes a las 18:30 ET, con alerta por correo ante fallas.
 - **Asset Bundle** `databricks.yml`: entornos `dev` (catálogo `oracle_dev`) y `prod` (`oracle_prd`).
 - **GitHub Actions** `.github/workflows/ci_cd.yml`: pruebas → `bundle validate` → `bundle deploy` a dev en cada push a
   `main`; a prod por ejecución manual con aprobación.
 
 ## Gobierno y seguridad
+- **Conexión a ADLS por Managed Identity** (Access Connector → storage credential → una external location por contenedor); comparación de métodos en `docs/conexion_adls.md`.
 - `seguridad/01_grupos_y_permisos.sql`: 4 grupos con permisos por capa, **filtro de fila** y **máscara de columna** en gold.
 - `seguridad/usuarios_ficticios.md`: usuarios de prueba y el procedimiento para evidenciar los permisos.
 - `seguridad/02_delta_sharing.sql`: share `oracle_kpis_mercado` con un destinatario abierto; `leer_delta_sharing.py` lo consume desde fuera.
@@ -123,3 +126,8 @@ pip install -r requirements-dev.txt     # requiere Java 8/11/17 y Python 3.10–
 pytest -q tests
 python herramientas/ejecutar_local.py   # pipeline completo sobre insumos/datos
 ```
+
+## Decisiones de diseño
+- **Tablas externas** en todas las capas: los datos viven en contenedores propios de ADLS (`bronze`, `silver`, `gold`, `control`) y sobreviven a un `DROP TABLE`.
+- **Bronze en Delta** (no Parquet): la ingesta idempotente consulta la propia tabla bronze para no recargar archivos, y Delta da historial y time travel desde la primera capa.
+- **Lógica separada de los notebooks:** las transformaciones son funciones puras probadas con pytest; los notebooks solo leen, llaman y escriben.

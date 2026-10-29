@@ -26,7 +26,7 @@ reglas = [
 ]
 filas = [(dt.datetime.utcnow(), n, float(v), float(u), c, float(v) <= float(u)) for n, v, u, c in reglas]
 res = spark.createDataFrame(filas, "fecha_utc timestamp, regla string, valor double, umbral double, critica boolean, cumple boolean")
-res.write.mode("append").saveAsTable(tabla("control", "calidad"))
+escribir(res, tabla("control", "calidad"))
 display(res)
 
 fallas = [r.regla for r in res.filter("critica and not cumple").collect()]

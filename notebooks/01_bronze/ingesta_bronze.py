@@ -48,13 +48,12 @@ df = (lector.load(f"{RUTA_RAW}/{ruta}")
             .withColumn("_archivo_modificado", F.col("_metadata.file_modification_time")))
 df = tr.agregar_auditoria(df, FUENTE)
 
-destino = tabla("bronze", FUENTE)
-if spark.catalog.tableExists(destino):
-    ya = spark.table(destino).select("_archivo_origen", "_archivo_modificado").distinct()
-    df = df.join(ya, ["_archivo_origen", "_archivo_modificado"], "left_anti")
+destino = tabla("bronze", FUENTE)   # tabla externa creada por 00_preparacion_ambiente
+ya = spark.table(destino).select("_archivo_origen", "_archivo_modificado").distinct()
+df = df.join(ya, ["_archivo_origen", "_archivo_modificado"], "left_anti")
 
 filas = df.count()
 if filas:
-    df.write.format("delta").mode("append").option("mergeSchema", "true").saveAsTable(destino)
+    escribir(df, destino)
 registrar_ejecucion(f"bronze_{FUENTE}", destino, filas, detalle=f"{RUTA_RAW}/{ruta}")
 print(f"{destino}: {filas} filas nuevas")
