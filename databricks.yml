@@ -18,21 +18,21 @@ variables:
     default: alertas@oracleinvestment.example
   nodo:
     description: Tipo de máquina del clúster del Job
-    default: Standard_DS3_v2
+    default: Standard_D4ds_v7   # 4 vCPU; en la suscripción de prueba (East US 2) solo la generación v7 está habilitada
 
 targets:
   dev:
     mode: development
     default: true
     workspace:
-      host: https://adb-0000000000000000.0.azuredatabricks.net   # reemplazar por el host del workspace de desarrollo
+      host: https://adb-7405617329608975.15.azuredatabricks.net   # workspace dbw-oracle-lakehouse (East US 2, Premium)
     variables:
       catalogo: oracle_dev
 
   prod:
     mode: production
     workspace:
-      host: https://adb-0000000000000000.0.azuredatabricks.net   # reemplazar por el host del workspace productivo
+      host: https://adb-7405617329608975.15.azuredatabricks.net   # mismo workspace; prod se aísla por catálogo (oracle_prd) y ruta
       root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalogo: oracle_prd

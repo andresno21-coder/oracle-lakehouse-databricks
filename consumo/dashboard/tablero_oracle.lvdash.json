@@ -1,0 +1,745 @@
+{
+ "datasets": [
+  {
+   "name": "ds_mercado",
+   "displayName": "mercado",
+   "queryLines": [
+    "SELECT anio, rendimiento_anual, volatilidad_anual, max_drawdown FROM oracle_prd.gold.kpis_activo_anual WHERE ticker = 'SPY'"
+   ]
+  },
+  {
+   "name": "ds_sector",
+   "displayName": "sector",
+   "queryLines": [
+    "SELECT anio, sector, rendimiento_promedio, volatilidad_promedio, peor_drawdown FROM oracle_prd.gold.kpis_sector_anual"
+   ]
+  },
+  {
+   "name": "ds_activos",
+   "displayName": "activos",
+   "queryLines": [
+    "SELECT k.anio, k.ticker, c.sector, k.rendimiento_anual, k.volatilidad_anual, k.rendimiento_dividendo FROM oracle_prd.gold.kpis_activo_anual k JOIN oracle_prd.silver.catalogo_activos c USING (ticker) WHERE c.tipo <> 'Indice'"
+   ]
+  },
+  {
+   "name": "ds_estrategias_mes",
+   "displayName": "estrategias mes",
+   "queryLines": [
+    "SELECT mes, familia, usd_neto, operaciones FROM oracle_prd.gold.kpis_estrategias"
+   ]
+  },
+  {
+   "name": "ds_estrategias_regimen",
+   "displayName": "estrategias regimen",
+   "queryLines": [
+    "SELECT familia, regimen_vix, SUM(operaciones) AS operaciones, ROUND(SUM(ganancia_bruta) / NULLIF(SUM(perdida_bruta), 0), 2) AS profit_factor, ROUND(AVG(tasa_acierto), 3) AS tasa_acierto FROM oracle_prd.gold.kpis_estrategias GROUP BY familia, regimen_vix ORDER BY familia, regimen_vix"
+   ]
+  },
+  {
+   "name": "ds_senales",
+   "displayName": "senales",
+   "queryLines": [
+    "SELECT ticker, nombre, sector, fecha, ROUND(cierre, 2) AS cierre, ROUND(rsi2, 1) AS rsi2, senal_e1, senal_e2 FROM oracle_prd.gold.panel_activos WHERE senal_e1 IS NOT NULL OR senal_e2 IS NOT NULL ORDER BY ticker"
+   ]
+  },
+  {
+   "name": "ds_calidad",
+   "displayName": "calidad",
+   "queryLines": [
+    "SELECT regla, ROUND(valor, 4) AS valor, umbral, cumple, fecha_utc FROM oracle_prd.control.calidad QUALIFY ROW_NUMBER() OVER (PARTITION BY regla ORDER BY fecha_utc DESC) = 1"
+   ]
+  }
+ ],
+ "pages": [
+  {
+   "name": "principal",
+   "displayName": "Mercado y estrategias",
+   "layout": [
+    {
+     "widget": {
+      "name": "titulo",
+      "multilineTextboxSpec": {
+       "lines": [
+        "## Oracle Investment · Mercado y estrategias\n",
+        "Lakehouse medallion en Azure Databricks: KPIs de 33 activos (2015–2026) y de las familias de estrategia simuladas. Los datos de estrategias respetan el filtro de fila y la máscara de Unity Catalog del usuario que publica.\n"
+       ]
+      }
+     },
+     "position": {
+      "x": 2,
+      "y": 0,
+      "width": 4,
+      "height": 1
+     }
+    },
+    {
+     "widget": {
+      "name": "filtro_anio",
+      "queries": [
+       {
+        "name": "q_ds_mercado",
+        "query": {
+         "datasetName": "ds_mercado",
+         "fields": [
+          {
+           "name": "anio",
+           "expression": "`anio`"
+          }
+         ],
+         "disaggregated": false
+        }
+       },
+       {
+        "name": "q_ds_sector",
+        "query": {
+         "datasetName": "ds_sector",
+         "fields": [
+          {
+           "name": "anio",
+           "expression": "`anio`"
+          }
+         ],
+         "disaggregated": false
+        }
+       },
+       {
+        "name": "q_ds_activos",
+        "query": {
+         "datasetName": "ds_activos",
+         "fields": [
+          {
+           "name": "anio",
+           "expression": "`anio`"
+          }
+         ],
+         "disaggregated": false
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "filter-single-select",
+       "encodings": {
+        "fields": [
+         {
+          "fieldName": "anio",
+          "displayName": "Año",
+          "queryName": "q_ds_mercado"
+         },
+         {
+          "fieldName": "anio",
+          "displayName": "Año",
+          "queryName": "q_ds_sector"
+         },
+         {
+          "fieldName": "anio",
+          "displayName": "Año",
+          "queryName": "q_ds_activos"
+         }
+        ]
+       },
+       "selection": {
+        "defaultSelection": {
+         "values": {
+          "dataType": "INTEGER",
+          "values": [
+           {
+            "value": "2025"
+           }
+          ]
+         }
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Año"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 0,
+      "width": 2,
+      "height": 1
+     }
+    },
+    {
+     "widget": {
+      "name": "c_rend",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_mercado",
+         "fields": [
+          {
+           "name": "rendimiento_anual",
+           "expression": "`rendimiento_anual`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "counter",
+       "encodings": {
+        "value": {
+         "fieldName": "rendimiento_anual",
+         "displayName": "Rendimiento del mercado",
+         "format": {
+          "type": "number-percent",
+          "decimalPlaces": {
+           "type": "max",
+           "places": 1
+          }
+         }
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Rendimiento del mercado",
+        "showDescription": true,
+        "description": "SPY en el año elegido"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 1,
+      "width": 2,
+      "height": 3
+     }
+    },
+    {
+     "widget": {
+      "name": "c_vol",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_mercado",
+         "fields": [
+          {
+           "name": "volatilidad_anual",
+           "expression": "`volatilidad_anual`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "counter",
+       "encodings": {
+        "value": {
+         "fieldName": "volatilidad_anual",
+         "displayName": "Volatilidad anual",
+         "format": {
+          "type": "number-percent",
+          "decimalPlaces": {
+           "type": "max",
+           "places": 1
+          }
+         }
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Volatilidad anual",
+        "showDescription": true,
+        "description": "SPY en el año elegido"
+       }
+      }
+     },
+     "position": {
+      "x": 2,
+      "y": 1,
+      "width": 2,
+      "height": 3
+     }
+    },
+    {
+     "widget": {
+      "name": "c_dd",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_mercado",
+         "fields": [
+          {
+           "name": "max_drawdown",
+           "expression": "`max_drawdown`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "counter",
+       "encodings": {
+        "value": {
+         "fieldName": "max_drawdown",
+         "displayName": "Caída máxima",
+         "format": {
+          "type": "number-percent",
+          "decimalPlaces": {
+           "type": "max",
+           "places": 1
+          }
+         }
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Caída máxima",
+        "showDescription": true,
+        "description": "SPY en el año elegido"
+       }
+      }
+     },
+     "position": {
+      "x": 4,
+      "y": 1,
+      "width": 2,
+      "height": 3
+     }
+    },
+    {
+     "widget": {
+      "name": "b_sector",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_sector",
+         "fields": [
+          {
+           "name": "sector",
+           "expression": "`sector`"
+          },
+          {
+           "name": "rendimiento_promedio",
+           "expression": "`rendimiento_promedio`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 3,
+       "widgetType": "bar",
+       "encodings": {
+        "x": {
+         "fieldName": "rendimiento_promedio",
+         "scale": {
+          "type": "quantitative"
+         },
+         "displayName": "Rendimiento promedio"
+        },
+        "y": {
+         "fieldName": "sector",
+         "scale": {
+          "type": "categorical",
+          "sort": {
+           "by": "x-reversed"
+          }
+         },
+         "displayName": "Sector"
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Rendimiento promedio por sector"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 4,
+      "width": 3,
+      "height": 8
+     }
+    },
+    {
+     "widget": {
+      "name": "s_riesgo",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_activos",
+         "fields": [
+          {
+           "name": "ticker",
+           "expression": "`ticker`"
+          },
+          {
+           "name": "sector",
+           "expression": "`sector`"
+          },
+          {
+           "name": "volatilidad_anual",
+           "expression": "`volatilidad_anual`"
+          },
+          {
+           "name": "rendimiento_anual",
+           "expression": "`rendimiento_anual`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 3,
+       "widgetType": "scatter",
+       "encodings": {
+        "x": {
+         "fieldName": "volatilidad_anual",
+         "scale": {
+          "type": "quantitative"
+         },
+         "displayName": "Volatilidad anual"
+        },
+        "y": {
+         "fieldName": "rendimiento_anual",
+         "scale": {
+          "type": "quantitative"
+         },
+         "displayName": "Rendimiento anual"
+        },
+        "color": {
+         "fieldName": "sector",
+         "scale": {
+          "type": "categorical"
+         },
+         "displayName": "Sector"
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Rendimiento vs. riesgo por activo"
+       }
+      }
+     },
+     "position": {
+      "x": 3,
+      "y": 4,
+      "width": 3,
+      "height": 8
+     }
+    },
+    {
+     "widget": {
+      "name": "l_familias",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_estrategias_mes",
+         "fields": [
+          {
+           "name": "mes",
+           "expression": "`mes`"
+          },
+          {
+           "name": "familia",
+           "expression": "`familia`"
+          },
+          {
+           "name": "sum(usd_neto)",
+           "expression": "SUM(`usd_neto`)"
+          }
+         ],
+         "disaggregated": false
+        }
+       }
+      ],
+      "spec": {
+       "version": 3,
+       "widgetType": "line",
+       "encodings": {
+        "x": {
+         "fieldName": "mes",
+         "scale": {
+          "type": "categorical"
+         },
+         "displayName": "Mes"
+        },
+        "y": {
+         "fieldName": "sum(usd_neto)",
+         "scale": {
+          "type": "quantitative"
+         },
+         "displayName": "USD neto"
+        },
+        "color": {
+         "fieldName": "familia",
+         "scale": {
+          "type": "categorical"
+         },
+         "displayName": "Familia"
+        }
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "USD neto mensual por familia de estrategia (cuentas Sim)"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 12,
+      "width": 6,
+      "height": 7
+     }
+    },
+    {
+     "widget": {
+      "name": "t_pf",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_estrategias_regimen",
+         "fields": [
+          {
+           "name": "familia",
+           "expression": "`familia`"
+          },
+          {
+           "name": "regimen_vix",
+           "expression": "`regimen_vix`"
+          },
+          {
+           "name": "operaciones",
+           "expression": "`operaciones`"
+          },
+          {
+           "name": "profit_factor",
+           "expression": "`profit_factor`"
+          },
+          {
+           "name": "tasa_acierto",
+           "expression": "`tasa_acierto`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "table",
+       "encodings": {
+        "columns": [
+         {
+          "fieldName": "familia",
+          "displayName": "familia"
+         },
+         {
+          "fieldName": "regimen_vix",
+          "displayName": "regimen_vix"
+         },
+         {
+          "fieldName": "operaciones",
+          "displayName": "operaciones"
+         },
+         {
+          "fieldName": "profit_factor",
+          "displayName": "profit_factor"
+         },
+         {
+          "fieldName": "tasa_acierto",
+          "displayName": "tasa_acierto"
+         }
+        ]
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Profit factor por familia y régimen de volatilidad"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 19,
+      "width": 3,
+      "height": 8
+     }
+    },
+    {
+     "widget": {
+      "name": "t_senales",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_senales",
+         "fields": [
+          {
+           "name": "ticker",
+           "expression": "`ticker`"
+          },
+          {
+           "name": "sector",
+           "expression": "`sector`"
+          },
+          {
+           "name": "fecha",
+           "expression": "`fecha`"
+          },
+          {
+           "name": "cierre",
+           "expression": "`cierre`"
+          },
+          {
+           "name": "rsi2",
+           "expression": "`rsi2`"
+          },
+          {
+           "name": "senal_e1",
+           "expression": "`senal_e1`"
+          },
+          {
+           "name": "senal_e2",
+           "expression": "`senal_e2`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "table",
+       "encodings": {
+        "columns": [
+         {
+          "fieldName": "ticker",
+          "displayName": "ticker"
+         },
+         {
+          "fieldName": "sector",
+          "displayName": "sector"
+         },
+         {
+          "fieldName": "fecha",
+          "displayName": "fecha"
+         },
+         {
+          "fieldName": "cierre",
+          "displayName": "cierre"
+         },
+         {
+          "fieldName": "rsi2",
+          "displayName": "rsi2"
+         },
+         {
+          "fieldName": "senal_e1",
+          "displayName": "senal_e1"
+         },
+         {
+          "fieldName": "senal_e2",
+          "displayName": "senal_e2"
+         }
+        ]
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Señales vigentes de las estrategias base"
+       }
+      }
+     },
+     "position": {
+      "x": 3,
+      "y": 19,
+      "width": 3,
+      "height": 8
+     }
+    },
+    {
+     "widget": {
+      "name": "t_calidad",
+      "queries": [
+       {
+        "name": "main_query",
+        "query": {
+         "datasetName": "ds_calidad",
+         "fields": [
+          {
+           "name": "regla",
+           "expression": "`regla`"
+          },
+          {
+           "name": "valor",
+           "expression": "`valor`"
+          },
+          {
+           "name": "umbral",
+           "expression": "`umbral`"
+          },
+          {
+           "name": "cumple",
+           "expression": "`cumple`"
+          },
+          {
+           "name": "fecha_utc",
+           "expression": "`fecha_utc`"
+          }
+         ],
+         "disaggregated": true
+        }
+       }
+      ],
+      "spec": {
+       "version": 2,
+       "widgetType": "table",
+       "encodings": {
+        "columns": [
+         {
+          "fieldName": "regla",
+          "displayName": "regla"
+         },
+         {
+          "fieldName": "valor",
+          "displayName": "valor"
+         },
+         {
+          "fieldName": "umbral",
+          "displayName": "umbral"
+         },
+         {
+          "fieldName": "cumple",
+          "displayName": "cumple"
+         },
+         {
+          "fieldName": "fecha_utc",
+          "displayName": "fecha_utc"
+         }
+        ]
+       },
+       "frame": {
+        "showTitle": true,
+        "title": "Salud del pipeline: último control de calidad"
+       }
+      }
+     },
+     "position": {
+      "x": 0,
+      "y": 27,
+      "width": 6,
+      "height": 6
+     }
+    }
+   ]
+  }
+ ]
+}

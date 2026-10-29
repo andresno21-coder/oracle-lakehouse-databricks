@@ -26,6 +26,19 @@ props = {"user": dbutils.secrets.get(ESCOPO, "db-usuario"), "password": dbutils.
 
 # COMMAND ----------
 
+# El esquema destino se crea una vez; Spark JDBC crea las tablas pero no los esquemas
+ddl = ("IF SCHEMA_ID('oracle') IS NULL EXEC('CREATE SCHEMA oracle')" if MOTOR == "azuresql"
+       else "CREATE SCHEMA IF NOT EXISTS oracle")
+jvm = spark.sparkContext._gateway.jvm
+jvm.java.lang.Class.forName(driver)
+conexion = jvm.java.sql.DriverManager.getConnection(url, props["user"], props["password"])
+try:
+    conexion.createStatement().execute(ddl)
+finally:
+    conexion.close()
+
+# COMMAND ----------
+
 for nombre in ["kpis_activo_anual", "kpis_sector_anual", "kpis_estrategias", "panel_activos"]:
     df = spark.table(tabla("gold", nombre))
     (df.write.mode("overwrite").option("truncate", "true").option("batchsize", 5000)

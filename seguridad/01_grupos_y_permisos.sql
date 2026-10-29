@@ -1,8 +1,9 @@
 -- Databricks notebook source
 -- MAGIC %md
 -- MAGIC # Seguridad · Grupos, usuarios ficticios y permisos por capa (Unity Catalog)
--- MAGIC Los grupos y usuarios se crean en la **consola de cuenta** (accounts.azuredatabricks.net → User management)
--- MAGIC y se asignan al workspace. Los usuarios del proyecto son ficticios (ver `usuarios_ficticios.md`).
+-- MAGIC Los grupos deben ser **grupos de cuenta** (Unity Catalog no reconoce los grupos locales del workspace). Se crean en
+-- MAGIC la consola de cuenta o con `herramientas/crear_usuarios_y_grupos.ps1` (API SCIM de cuenta expuesta por el workspace).
+-- MAGIC Los usuarios del proyecto son ficticios (ver `usuarios_ficticios.md`).
 -- MAGIC
 -- MAGIC | Grupo | Rol | bronze | silver | gold | control |
 -- MAGIC |---|---|---|---|---|---|
@@ -17,7 +18,10 @@ CREATE WIDGET TEXT catalogo DEFAULT 'oracle_dev';
 
 -- COMMAND ----------
 
-GRANT USE CATALOG ON CATALOG ${catalogo} TO `oi_ingenieros_datos`, `oi_analistas_riesgo`, `oi_consumidores_bi`, `oi_auditores`;
+-- Un GRANT por principal: Databricks SQL no acepta varios destinatarios en la misma sentencia
+GRANT USE CATALOG ON CATALOG ${catalogo} TO `oi_analistas_riesgo`;
+GRANT USE CATALOG ON CATALOG ${catalogo} TO `oi_consumidores_bi`;
+GRANT USE CATALOG ON CATALOG ${catalogo} TO `oi_auditores`;
 
 -- Ingeniería: dueña de todo el lakehouse del entorno
 GRANT ALL PRIVILEGES ON CATALOG ${catalogo} TO `oi_ingenieros_datos`;
