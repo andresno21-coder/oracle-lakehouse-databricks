@@ -14,6 +14,8 @@ Despliegue real del 29-oct-2026 en la suscripción de prueba del autor (región 
 
 ## 1. Job orquestado (12 tareas)
 `01_job_prod_12_tareas_ok.jpg`: corrida de producción con las 12 tareas en verde (15 min, clúster de un nodo).
+`04_job_prod_timeline.jpg`: línea de tiempo de la misma corrida: preparación, las 5 ingestas bronze en paralelo,
+silver, gold, calidad y, al final, exportación y mantenimiento en paralelo.
 
 | Corrida | Target | Resultado |
 |---|---|---|
@@ -34,6 +36,10 @@ Despliegue real del 29-oct-2026 en la suscripción de prueba del autor (región 
 | gold.senales_estrategias_base | 104.056 |
 
 Las 18 tablas del catálogo aparecen como `EXTERNAL` en `information_schema.tables`.
+`02_catalogo_tabla_externa_mascara.jpg`: `oracle_prd.gold.kpis_estrategias` en Catalog Explorer, tipo *External*, con
+las funciones `filtro_familias` y `mascara_usd` y la máscara aplicada a `usd_neto`.
+`03_linaje_kpis_estrategias.jpg`: linaje automático de Unity Catalog: `silver.operaciones` → `gold.kpis_estrategias`
+→ `control.respaldo_kpis_estrategias_*` (DEEP CLONE del mantenimiento).
 
 ## 3. Ingesta incremental idempotente
 Bitácora `control.ejecuciones`: la primera corrida cargó 104.056 precios, 17.169 operaciones, 1.486 dividendos,
@@ -67,7 +73,8 @@ vigentes y salud del pipeline. Definición reproducible con `consumo/dashboard/g
 ## 8. Genie
 Espacio "Analista de mercado Oracle" (`consumo/genie/generar_espacio.py`). Pregunta: *¿Qué sector tuvo el mejor
 rendimiento en 2025 y con qué volatilidad?* → Genie generó SQL sobre `oracle_prd.gold.kpis_sector_anual` y respondió
-**ETF Commodities Focused, rendimiento 63,5 %, volatilidad 27,6 %**, que coincide con el tablero.
+**ETF Commodities Focused, rendimiento 63,5 %, volatilidad 27,6 %**, que coincide con el tablero
+(`08_genie_respuesta.jpg`).
 
 ## 9. Databricks App
 `oracle-portal` desplegada (estado *App is running*) con el recurso SQL warehouse y un service principal
@@ -78,7 +85,7 @@ y las señales vigentes de las estrategias base leídos de `oracle_prd.gold`.
 ## 10. Delta Sharing
 `seguridad/02_delta_sharing.sql` sobre `oracle_prd`: share `oracle_kpis_mercado` con `gold.kpis_activo_anual` y
 `gold.kpis_sector_anual` (con historial) y `gold.panel_activos`; destinatario abierto `socio_research` con `SELECT`.
-El metastore quedó con alcance `INTERNAL_AND_EXTERNAL`.
+El metastore quedó con alcance `INTERNAL_AND_EXTERNAL`. `09_delta_sharing_share.jpg`: el share con sus 3 activos.
 
 Lectura desde fuera de Databricks (`seguridad/leer_delta_sharing.py`, Python 3.11 local con `delta-sharing`, credencial
 descargada del enlace de activación y no versionada):
