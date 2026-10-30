@@ -70,5 +70,7 @@ rendimiento en 2025 y con qué volatilidad?* → Genie generó SQL sobre `oracle
 **ETF Commodities Focused, rendimiento 63,5 %, volatilidad 27,6 %**, que coincide con el tablero.
 
 ## 9. Databricks App
-`oracle-portal` desplegada (estado *App started successfully*) con el recurso SQL warehouse y un service principal
+`oracle-portal` desplegada (estado *App is running*) con el recurso SQL warehouse y un service principal
 propio con permisos mínimos: `SELECT` en gold y `MODIFY` solo en `control.solicitudes_acceso`.
+`07_app_portal_panel.jpg`: la app, tras el consentimiento OAuth del usuario, muestra el rendimiento promedio por sector
+y las señales vigentes de las estrategias base leídos de `oracle_prd.gold`.
