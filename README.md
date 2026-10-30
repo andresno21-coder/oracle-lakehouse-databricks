@@ -95,7 +95,8 @@ Detalle y capturas en [`docs/evidencias/`](docs/evidencias/README.md).
   silver → gold → calidad → mantenimiento Delta y exportación (condición `ALL_SUCCESS`). Programado de lunes a viernes a las 18:30 ET, con alerta por correo ante fallas.
 - **Asset Bundle** `databricks.yml`: entornos `dev` (catálogo `oracle_dev`) y `prod` (`oracle_prd`).
 - **GitHub Actions** `.github/workflows/ci_cd.yml`: pruebas → `bundle validate` → `bundle deploy` a dev en cada push a
-  `main`; a prod por ejecución manual con aprobación.
+  `main`; a prod por ejecución manual con aprobación. Sin los secretos `DATABRICKS_HOST` y `DATABRICKS_TOKEN` en el
+  repositorio solo corren las pruebas (validar y desplegar quedan omitidos); el despliegue real está en `docs/evidencias/`.
 
 ## Gobierno y seguridad
 - **Conexión a ADLS por Managed Identity** (Access Connector → storage credential → una external location por contenedor); comparación de métodos en `docs/conexion_adls.md`.
