@@ -74,3 +74,20 @@ rendimiento en 2025 y con qué volatilidad?* → Genie generó SQL sobre `oracle
 propio con permisos mínimos: `SELECT` en gold y `MODIFY` solo en `control.solicitudes_acceso`.
 `07_app_portal_panel.jpg`: la app, tras el consentimiento OAuth del usuario, muestra el rendimiento promedio por sector
 y las señales vigentes de las estrategias base leídos de `oracle_prd.gold`.
+
+## 10. Delta Sharing
+`seguridad/02_delta_sharing.sql` sobre `oracle_prd`: share `oracle_kpis_mercado` con `gold.kpis_activo_anual` y
+`gold.kpis_sector_anual` (con historial) y `gold.panel_activos`; destinatario abierto `socio_research` con `SELECT`.
+El metastore quedó con alcance `INTERNAL_AND_EXTERNAL`.
+
+Lectura desde fuera de Databricks (`seguridad/leer_delta_sharing.py`, Python 3.11 local con `delta-sharing`, credencial
+descargada del enlace de activación y no versionada):
+
+| Tabla compartida | Filas leídas |
+|---|---|
+| `oracle_kpis_mercado.gold.panel_activos` | 35 |
+| `oracle_kpis_mercado.gold.kpis_activo_anual` | 420 |
+| `oracle_kpis_mercado.gold.kpis_sector_anual` | 264 |
+
+Top 2025 leído por el socio: ETF Commodities Focused (63,5 %, volatilidad 27,6 %), Healthcare (48,1 %),
+Financial Services (37,1 %): las mismas cifras que el tablero y Genie.
