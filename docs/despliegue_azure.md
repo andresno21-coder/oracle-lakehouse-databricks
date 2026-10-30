@@ -35,7 +35,11 @@ Por eso el Job usa un clúster de un solo nodo `Standard_D4ds_v7` (variable `nod
 5. Grupos y usuarios ficticios **de cuenta** (Unity Catalog no reconoce grupos locales del workspace): API SCIM de
    cuenta expuesta por el workspace, `/api/2.0/account/scim/v2/Groups`. Luego `seguridad/01_grupos_y_permisos.sql`.
 6. Delta Sharing requiere `CREATE SHARE` y `CREATE RECIPIENT` sobre el metastore: en la consola de cuenta
-   (accounts.azuredatabricks.net → Catalog → metastore) se cambia el **Metastore admin** al usuario del workspace.
+   (accounts.azuredatabricks.net → Catalog → metastore) se cambia el **Metastore admin** al usuario del workspace y se
+   habilita compartir fuera de la organización (alcance `INTERNAL_AND_EXTERNAL`).
+   Con una cuenta personal de Microsoft (`@live.com`, `@outlook.com`) la consola de cuenta rechaza el inicio de sesión
+   ("la cuenta no existe en el inquilino Microsoft Services"): se crea en Entra ID un usuario nativo
+   (`admin@<inquilino>.onmicrosoft.com`) con rol **Administrador global** y se entra con él solo para este paso.
 
 ## 3. Cargar los insumos a ADLS
 ```bash
