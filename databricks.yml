@@ -19,7 +19,6 @@ sync:
     - docs/**
     - tests/**
     - herramientas/**
-    - "**/__pycache__/**"
 
 variables:
   catalogo:

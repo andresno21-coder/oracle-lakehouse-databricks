@@ -1,0 +1,2 @@
+Tablero AI/BI "Oracle Investment · Mercado y estrategias" (publicado; requiere acceso al workspace):
+https://adb-7405617329608975.15.azuredatabricks.net/dashboardsv3/01f1d3ed05e811d787ec82bf49fc1e95/published

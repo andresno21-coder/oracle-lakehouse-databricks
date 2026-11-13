@@ -30,7 +30,7 @@ CONTENEDORES = ["metastore", "raw", "bronze", "silver", "gold", "control"]
 for c in CONTENEDORES:
     spark.sql(f"CREATE EXTERNAL LOCATION IF NOT EXISTS ext_oracle_{c} URL '{ruta(c)}' "
               f"WITH (STORAGE CREDENTIAL {CREDENCIAL})")
-display(spark.sql("SHOW EXTERNAL LOCATIONS").filter("name LIKE 'ext_oracle_%'").select("name", "url", "credential_name"))
+display(spark.sql("SHOW EXTERNAL LOCATIONS").filter("name LIKE 'ext_oracle_%'").select("name", "url"))
 
 # COMMAND ----------
 
