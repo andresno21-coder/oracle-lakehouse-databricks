@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 04 · Mantenimiento y auditoría de tablas Delta
+# MAGIC # 4 · Load · Mantenimiento y auditoría de tablas Delta
 # MAGIC - **Historial y detalle** de las tablas silver (`DESCRIBE HISTORY` / `DESCRIBE DETAIL` vía API de Delta).
 # MAGIC - **Time travel:** compara la versión actual de `precios_diarios` con la anterior (filas nuevas o corregidas).
 # MAGIC - **OPTIMIZE + ZORDER** en gold y **VACUUM** con la retención por defecto (7 días): nunca `RETAIN 0` en producción,
@@ -10,7 +10,7 @@
 
 # COMMAND ----------
 
-# MAGIC %run ../_comun
+# MAGIC %run ./_comun
 
 # COMMAND ----------
 

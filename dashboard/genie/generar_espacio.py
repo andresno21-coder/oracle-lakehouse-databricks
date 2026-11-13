@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Genera el cuerpo para crear el espacio de Genie "Analista de mercado Oracle" (ver espacio_genie.md).
 
-Uso:  python consumo/genie/generar_espacio.py <warehouse_id> [catalogo]  →  consumo/genie/espacio_genie.json
-      databricks genie create-space --json @consumo/genie/espacio_genie.json
+Uso:  python dashboard/genie/generar_espacio.py <warehouse_id> [catalogo]  →  dashboard/genie/espacio_genie.json
+      databricks genie create-space --json @dashboard/genie/espacio_genie.json
 """
 import json
 import sys

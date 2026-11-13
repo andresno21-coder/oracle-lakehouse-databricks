@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 03 · Gold · KPIs y señales
+# MAGIC # 4 · Load · Gold · KPIs y señales
 # MAGIC | Tabla | Grano | Para qué |
 # MAGIC |---|---|---|
 # MAGIC | `kpis_activo_anual` | ticker × año | rendimiento, volatilidad, máximo drawdown, rendimiento por dividendo, rendimiento/riesgo |
@@ -10,7 +10,7 @@
 
 # COMMAND ----------
 
-# MAGIC %run ../_comun
+# MAGIC %run ./_comun
 
 # COMMAND ----------
 

@@ -8,7 +8,7 @@ Fuentes y formatos (distintos a propósito, como en un data lake real):
   catalogo/mapa_futuros.csv            micro futuro CME -> ETF subyacente (tabla de referencia)
   operaciones/operaciones.parquet      bitácora de operaciones de Oracle Investment (simulación), anonimizada
 
-Uso:  python descargar_insumos.py --salida ./datos   (luego se sube a ADLS con subir_a_adls.md)
+Uso:  python datasets/descargar_insumos.py   (luego se sube a ADLS con subir_a_adls.md)
 Requiere: yfinance, pandas, pyarrow. Si hay un proxy TLS corporativo, definir CURL_CA_BUNDLE.
 """
 import argparse, json, os, sqlite3
@@ -100,7 +100,7 @@ def operaciones(salida: Path, bitacora: Path):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--salida", default=str(Path(__file__).with_name("datos")))
+    ap.add_argument("--salida", default=str(Path(__file__).parent))
     ap.add_argument("--bitacora", default=r"C:\Users\Windows 11\Documents\Proyectos\Oracle Investment\Oracle_Bitacora\datos\oracle_bitacora.sqlite")
     a = ap.parse_args()
     s = Path(a.salida); s.mkdir(parents=True, exist_ok=True)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Ejecuta el pipeline completo en Spark local sobre insumos/datos (validación antes de Databricks).
+"""Ejecuta el pipeline completo en Spark local sobre datasets/ (validación antes de Databricks).
 
 No escribe Delta: calcula cada capa en memoria, imprime conteos y guarda muestras de gold en
 docs/muestras/ (CSV) para documentar los KPIs. Uso: python herramientas/ejecutar_local.py
@@ -7,12 +7,12 @@ docs/muestras/ (CSV) para documentar los KPIs. Uso: python herramientas/ejecutar
 import json, os, sys
 from pathlib import Path
 RAIZ = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(RAIZ / "src"))
+sys.path.insert(0, str(RAIZ / "proceso"))
 os.environ.setdefault("PYSPARK_PYTHON", sys.executable)
 from pyspark.sql import SparkSession, functions as F
 from oracle_lakehouse import transformaciones as tr
 
-D = RAIZ / "insumos" / "datos"
+D = RAIZ / "datasets"
 spark = (SparkSession.builder.master("local[4]").appName("oracle-lakehouse-local")
          .config("spark.sql.shuffle.partitions", "8").config("spark.ui.enabled", "false")
          .config("spark.driver.memory", "4g").getOrCreate())

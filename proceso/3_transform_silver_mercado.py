@@ -1,13 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 02 · Silver · Mercado (precios, dividendos y catálogo)
+# MAGIC # 3 · Transform · Silver · Mercado (precios, dividendos y catálogo)
 # MAGIC - Tipado, limpieza y deduplicación de precios (una fila por ticker y fecha; la ingesta más reciente gana).
 # MAGIC - Rendimientos diarios simple y logarítmico, y **join** con el catálogo (sector, industria, tipo).
 # MAGIC - Carga con **MERGE** (upsert) usando la API de Delta Lake en PySpark: solo cambia lo nuevo o corregido.
 
 # COMMAND ----------
 
-# MAGIC %run ../_comun
+# MAGIC %run ./_comun
 
 # COMMAND ----------
 

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Aplica los ajustes de alineación con lo enseñado en clase (tablas externas, Job, permisos, orquestador)."""
+"""Aplica los ajustes de alineación con lo enseñado en clase (tablas externas, Job, permisos, orquestador).
+
+Guion de un solo uso, ya aplicado el 29-oct-2026: las rutas corresponden a la estructura anterior del repositorio
+(notebooks/…); se conserva solo como registro de los cambios."""
 from pathlib import Path
 R = Path(__file__).resolve().parents[1]
 

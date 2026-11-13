@@ -1,13 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 02 · Silver · Operaciones con contexto de mercado
+# MAGIC # 3 · Transform · Silver · Operaciones con contexto de mercado
 # MAGIC Une tres fuentes: **operaciones** (Parquet) + **mapa de futuros** (CSV) + **precios del subyacente y VIX** (silver).
 # MAGIC Cada operación queda con su ETF subyacente, el rendimiento del subyacente ese día y el régimen de volatilidad
 # MAGIC (BAJO < 15 ≤ MEDIO ≤ 25 < ALTO). Las operaciones sin subyacente (cripto) se conservan y se marcan.
 
 # COMMAND ----------
 
-# MAGIC %run ../_comun
+# MAGIC %run ./_comun
 
 # COMMAND ----------
 
@@ -17,7 +17,7 @@ ops = tr.normalizar_operaciones(spark.table(tabla("bronze", "operaciones")), spa
 ops_ctx = tr.contexto_de_mercado(ops, spark.table(tabla("silver", "precios_diarios")))
 
 destino = tabla("silver", "operaciones")
-if spark.table(destino).isEmpty():          # tabla externa particionada por familia (00_preparacion_ambiente)
+if spark.table(destino).isEmpty():          # tabla externa particionada por familia (1_preparacion_ambiente)
     escribir(ops_ctx, destino)
 else:
     (DeltaTable.forName(spark, destino).alias("t").merge(ops_ctx.alias("s"), "t.id_operacion = s.id_operacion")

@@ -1,13 +1,13 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 05 · Servir · Exportar gold a la base transaccional
+# MAGIC # 4 · Load · Exportar gold a la base transaccional
 # MAGIC Copia las tablas gold a una base relacional para las aplicaciones y el reporte (Power BI):
 # MAGIC **Azure SQL Database** (por defecto) o **PostgreSQL / Lakebase**. Las credenciales viven en un *secret scope*
 # MAGIC respaldado por Azure Key Vault (`oracle-kv`); nunca en el código.
 
 # COMMAND ----------
 
-# MAGIC %run ../_comun
+# MAGIC %run ./_comun
 
 # COMMAND ----------
 

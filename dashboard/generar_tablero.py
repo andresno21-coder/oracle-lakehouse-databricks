@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Genera la definición del tablero AI/BI (Lakeview) "Oracle Investment · Mercado y estrategias".
 
-Uso:  python consumo/dashboard/generar_tablero.py [catalogo]  →  consumo/dashboard/tablero_oracle.lvdash.json
+Uso:  python dashboard/generar_tablero.py [catalogo]  →  dashboard/tablero_oracle.lvdash.json
 Luego se crea y publica con la CLI:  databricks lakeview create --display-name ... --serialized-dashboard @archivo
 Las consultas son las de consultas_tablero.sql; el parámetro :anio se reemplaza por un filtro de año del tablero.
 """

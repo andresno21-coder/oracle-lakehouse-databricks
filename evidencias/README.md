@@ -1,5 +1,7 @@
 # Evidencias de la ejecución en Azure Databricks
 
+`00_arquitectura.png`: arquitectura del proyecto (se regenera con `herramientas/dibujar_arquitectura.py`).
+
 Despliegue real del 29-oct-2026 en la suscripción de prueba del autor (región East US 2).
 
 | Recurso | Nombre |
@@ -12,7 +14,12 @@ Despliegue real del 29-oct-2026 en la suscripción de prueba del autor (región 
 | Base transaccional | Azure SQL Database `oracle` (oferta gratuita, Central US) |
 | Secret scope | `oracle-kv` (servidor, base, usuario y clave de la base) |
 
-## 1. Job orquestado (12 tareas)
+## 1. Workflow orquestado
+Las capturas de esta sección son de la corrida del 29-oct, anterior a la reorganización del repositorio: las tareas
+se llamaban `bronze_*`, `silver_*`, `gold_kpis`, `controles_calidad`, `mantenimiento_delta` y
+`exportar_base_transaccional`. Hoy son `extract_*`, `transform_*` y `load_*`, con los mismos notebooks (ahora en
+`proceso/`), más la tarea final `grants`.
+
 `01_job_prod_12_tareas_ok.jpg`: corrida de producción con las 12 tareas en verde (15 min, clúster de un nodo).
 `04_job_prod_timeline.jpg`: línea de tiempo de la misma corrida: preparación, las 5 ingestas bronze en paralelo,
 silver, gold, calidad y, al final, exportación y mantenimiento en paralelo.
@@ -68,10 +75,10 @@ Prueba sobre `gold.kpis_estrategias` con el mismo usuario, cambiando solo su per
 ## 7. Tablero AI/BI
 `05_tablero_kpis_mercado.jpg` y `06_tablero_tablas_y_calidad.jpg`: tablero publicado con filtro de año, tarjetas del
 mercado, rendimiento por sector, rendimiento vs. riesgo, USD neto por familia, profit factor por régimen, señales
-vigentes y salud del pipeline. Definición reproducible con `consumo/dashboard/generar_tablero.py`.
+vigentes y salud del pipeline. Definición reproducible con `dashboard/generar_tablero.py`.
 
 ## 8. Genie
-Espacio "Analista de mercado Oracle" (`consumo/genie/generar_espacio.py`). Pregunta: *¿Qué sector tuvo el mejor
+Espacio "Analista de mercado Oracle" (`dashboard/genie/generar_espacio.py`). Pregunta: *¿Qué sector tuvo el mejor
 rendimiento en 2025 y con qué volatilidad?* → Genie generó SQL sobre `oracle_prd.gold.kpis_sector_anual` y respondió
 **ETF Commodities Focused, rendimiento 63,5 %, volatilidad 27,6 %**, que coincide con el tablero
 (`08_genie_respuesta.jpg`).

@@ -1,29 +1,47 @@
-# CI/CD del lakehouse
-#  - En cada pull request y push: pruebas unitarias de las transformaciones (Spark local) y validación del bundle.
-#  - Push a main: despliegue automático a DEV.
-#  - Ejecución manual (workflow_dispatch) con entorno "prod": despliegue a PRODUCCIÓN (requiere aprobación del environment).
-#  - Sin los secretos DATABRICKS_HOST y DATABRICKS_TOKEN solo corren las pruebas; validar y desplegar quedan omitidos.
+# CI/CD del lakehouse: de GitHub a producción en Azure Databricks.
+#
+#   pruebas ─► validar ─► desplegar en producción ─► ejecutar el workflow ─► resumen
+#
+#  - Pull request: solo pruebas unitarias (Spark local) y validación del bundle.
+#  - Push a main: además despliega la carpeta proceso/ y el workflow en PRODUCCIÓN (catálogo oracle_prd) y lo ejecuta:
+#    preparación de ambiente → extract → transform → load → grants. El job de Actions termina en verde solo si
+#    todas las tareas del workflow terminan bien.
+#  - Ejecución manual (workflow_dispatch): permite elegir dev o prod y desplegar sin ejecutar.
+#
+# Secretos del repositorio: DATABRICKS_HOST y DATABRICKS_TOKEN. Sin ellos solo corren las pruebas.
 name: ci-cd
 
 on:
   pull_request:
   push:
     branches: [ main ]
+    paths-ignore: [ "**.md", "evidencias/**", "certificaciones/**", "docs/**" ]
   workflow_dispatch:
     inputs:
       entorno:
         description: Entorno destino
         type: choice
-        options: [ dev, prod ]
-        default: dev
+        options: [ prod, dev ]
+        default: prod
+      ejecutar:
+        description: Ejecutar el workflow después de desplegar
+        type: boolean
+        default: true
+
+concurrency:
+  group: despliegue-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  ENTORNO: ${{ github.event.inputs.entorno || 'prod' }}
 
 jobs:
   pruebas:
+    name: Pruebas unitarias (PySpark local)
     runs-on: ubuntu-latest
     outputs:
       databricks: ${{ steps.credenciales.outputs.disponibles }}
     steps:
-      # Validar y desplegar solo corren si el repositorio tiene configurados los secretos del workspace
       - id: credenciales
         run: echo "disponibles=${{ secrets.DATABRICKS_HOST != '' && secrets.DATABRICKS_TOKEN != '' }}" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
@@ -34,7 +52,8 @@ jobs:
       - run: pip install -r requirements-dev.txt
       - run: pytest -q tests
 
-  validar_bundle:
+  validar:
+    name: Validar el bundle
     runs-on: ubuntu-latest
     needs: pruebas
     if: needs.pruebas.outputs.databricks == 'true'
@@ -44,17 +63,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: databricks/setup-cli@main
-      - run: databricks bundle validate -t dev
+      - run: databricks bundle validate -t "$ENTORNO"
 
   desplegar:
+    name: Desplegar y ejecutar en Databricks
     runs-on: ubuntu-latest
-    needs: validar_bundle
+    needs: validar
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    environment: ${{ github.event.inputs.entorno || 'dev' }}
+    environment: ${{ github.event.inputs.entorno || 'prod' }}
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: databricks/setup-cli@main
-      - run: databricks bundle deploy -t ${{ github.event.inputs.entorno || 'dev' }}
+
+      - name: Desplegar notebooks de proceso/ y el workflow
+        run: databricks bundle deploy -t "$ENTORNO"
+
+      - name: Notebooks desplegados
+        run: |
+          raiz=$(databricks bundle validate -t "$ENTORNO" -o json | jq -r '.workspace.file_path')
+          echo "Carpeta en el workspace: $raiz/proceso"
+          databricks workspace list "$raiz/proceso" -o json | jq -r '.[] | "\(.object_type)\t\(.path)"'
+
+      - name: Un solo clúster encendido
+        run: |
+          # El workflow usa un clúster efímero: antes de ejecutarlo no debe quedar ningún clúster interactivo encendido.
+          databricks clusters list -o json \
+            | jq -r '.[] | select(.state == "RUNNING" and .cluster_source != "JOB") | .cluster_id' \
+            | while read -r id; do echo "Apagando clúster interactivo $id"; databricks clusters delete "$id"; done
+          echo "Clústeres encendidos antes de la corrida: $(databricks clusters list -o json | jq '[.[] | select(.state == "RUNNING")] | length')"
+
+      - name: Ejecutar el workflow y esperar el resultado
+        if: github.event_name == 'push' || github.event.inputs.ejecutar == 'true'
+        run: databricks bundle run -t "$ENTORNO" oracle_etl
+
+      - name: Resumen de la corrida
+        if: always()
+        run: |
+          job_id=$(databricks bundle summary -t "$ENTORNO" -o json | jq -r '.resources.jobs.oracle_etl.id')
+          corrida=$(databricks jobs list-runs --job-id "$job_id" --limit 1 -o json | jq -r '(.runs // .)[0].run_id')
+          detalle=$(databricks jobs get-run "$corrida" -o json)
+          {
+            echo "## Workflow en Databricks ($ENTORNO)"
+            echo ""
+            echo "Corrida \`$corrida\` del job \`$job_id\`: **$(echo "$detalle" | jq -r '.state.result_state // .state.life_cycle_state')**"
+            echo ""
+            echo "| Tarea | Resultado | Duración (s) |"
+            echo "|---|---|---|"
+            echo "$detalle" | jq -r '.tasks | sort_by(.start_time)[] | "| \(.task_key) | \(.state.result_state // .state.life_cycle_state) | \(((.end_time - .start_time) / 1000) | floor) |"'
+          } >> "$GITHUB_STEP_SUMMARY"

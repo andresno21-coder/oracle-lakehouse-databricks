@@ -1,6 +1,6 @@
 # Despliegue en Azure Databricks
 
-Pasos usados en el despliegue real (29-oct-2026, suscripción de prueba). Resultados en `docs/evidencias/README.md`.
+Pasos usados en el despliegue real (29-oct-2026, suscripción de prueba). Resultados en `evidencias/README.md`.
 
 ## 1. Recursos de Azure (una vez)
 ```bash
@@ -29,7 +29,7 @@ Por eso el Job usa un clúster de un solo nodo `Standard_D4ds_v7` (variable `nod
 2. Storage credential con el Access Connector:
    `databricks storage-credentials create --json '{"name":"cred_oracle_adls","azure_managed_identity":{"access_connector_id":"<id>"}}'`
 3. Las ubicaciones externas, el catálogo, los esquemas y las 17 tablas externas los crea la primera tarea del Job
-   (`notebooks/00_preparacion/00_preparacion_ambiente.sql`).
+   (`proceso/1_preparacion_ambiente.py`; el mismo DDL en SQL está en `PrepAmb/01_preparacion_ambiente.sql`).
 4. Secret scope `oracle-kv` con `sql-servidor`, `sql-base`, `db-usuario`, `db-clave`
    (`databricks secrets create-scope oracle-kv` y `databricks secrets put-secret ...`).
 5. Grupos y usuarios ficticios **de cuenta** (Unity Catalog no reconoce grupos locales del workspace): API SCIM de
@@ -43,8 +43,8 @@ Por eso el Job usa un clúster de un solo nodo `Standard_D4ds_v7` (variable `nod
 
 ## 3. Cargar los insumos a ADLS
 ```bash
-python insumos/descargar_insumos.py --salida insumos/datos
-az storage blob upload-batch --account-name storacleinvestment -d raw -s insumos/datos --auth-mode login --overwrite
+python datasets/descargar_insumos.py --salida datasets
+az storage blob upload-batch --account-name storacleinvestment -d raw -s datasets --auth-mode login --overwrite
 ```
 
 ## 4. Desplegar con el bundle
@@ -58,13 +58,14 @@ databricks bundle deploy -t prod && databricks bundle run -t prod oracle_etl
 dev y prod comparten workspace y se aíslan por catálogo (`oracle_dev` / `oracle_prd`) y por ruta del bundle.
 
 ## 5. GitHub Actions
-Secretos del repositorio: `DATABRICKS_HOST`, `DATABRICKS_TOKEN` (token de un service principal).
-Crear el environment `prod` con revisores obligatorios para que el despliegue a producción requiera aprobación.
+Secretos del repositorio: `DATABRICKS_HOST` y `DATABRICKS_TOKEN`. Cada push a `main` valida el bundle, despliega la
+carpeta `proceso/` y el workflow en producción y lo ejecuta (`.github/workflows/ci_cd.yml`). Para exigir una aprobación
+manual antes de producción, agregar revisores obligatorios al environment `prod` del repositorio.
 
 ## 6. Consumo
-- Tablero AI/BI: `python consumo/dashboard/generar_tablero.py oracle_prd` → `databricks lakeview create` y `publish`.
-- Genie: `python consumo/genie/generar_espacio.py <warehouse_id> oracle_prd` → `databricks genie create-space --json @consumo/genie/espacio_genie.json`.
-- App: `databricks apps create` con el recurso SQL warehouse, `databricks sync consumo/app <ruta>` y
+- Tablero AI/BI: `python dashboard/generar_tablero.py oracle_prd` → `databricks lakeview create` y `publish`.
+- Genie: `python dashboard/genie/generar_espacio.py <warehouse_id> oracle_prd` → `databricks genie create-space --json @dashboard/genie/espacio_genie.json`.
+- App: `databricks apps create` con el recurso SQL warehouse, `databricks sync databricks-app <ruta>` y
   `databricks apps deploy oracle-portal --source-code-path <ruta>`. Al service principal de la app: `USE CATALOG`,
   `SELECT` en gold y `MODIFY` en `control.solicitudes_acceso`.
 - Delta Sharing: `seguridad/02_delta_sharing.sql`.

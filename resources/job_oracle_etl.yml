@@ -1,22 +1,31 @@
+# Workflow del lakehouse. Solo usa notebooks de la carpeta proceso/:
+#
+#   preparacion_ambiente ─► extract_* (5 en paralelo) ─► transform_* ─► load_* ─► grants
+#
+# Lo despliega y lo ejecuta GitHub Actions (.github/workflows/ci_cd.yml) con `databricks bundle deploy` y `bundle run`.
 resources:
   jobs:
     oracle_etl:
       name: "[${bundle.target}] Oracle Lakehouse · ETL medallion"
-      description: Ingesta raw (ADLS) → bronze → silver → gold → calidad → base transaccional
+      description: Preparación de ambiente → extract (raw en ADLS → bronze) → transform (silver) → load (gold y base transaccional) → grants
       max_concurrent_runs: 1
       schedule:
         quartz_cron_expression: "0 30 18 ? * MON-FRI"   # 18:30 de lunes a viernes, después del cierre del mercado
         timezone_id: America/New_York
         pause_status: PAUSED                            # se activa en prod desde la UI o el bundle
       email_notifications:
-        on_start: [ "${var.correo_alertas}" ]
-        on_success: [ "${var.correo_alertas}" ]
         on_failure: [ "${var.correo_alertas}" ]
       parameters:
         - name: catalogo
           default: ${var.catalogo}
         - name: ruta_raw
           default: ${var.ruta_raw}
+      tags:
+        proyecto: oracle-lakehouse
+        entorno: ${bundle.target}
+        desplegado_por: github-actions
+      # Un único clúster, efímero: se crea al iniciar la corrida y se apaga al terminar. Entre corridas no queda
+      # ningún clúster encendido, ni en dev ni en prod.
       job_clusters:
         - job_cluster_key: etl
           new_cluster:
@@ -31,77 +40,88 @@ resources:
             custom_tags:
               ResourceClass: SingleNode
       tasks:
+        # ── 1 · Preparación de ambiente ─────────────────────────────────────────────────────────────
         - task_key: preparacion_ambiente
           job_cluster_key: etl
           notebook_task:
-            notebook_path: ../notebooks/00_preparacion/00_preparacion_ambiente.sql
-            base_parameters: { cuenta: storacleinvestment }
+            notebook_path: ../proceso/1_preparacion_ambiente.py
+            base_parameters: { cuenta: "${var.cuenta_adls}" }
 
-        - task_key: bronze_precios
+        # ── 2 · Extract: un notebook parametrizado, cinco fuentes en paralelo ───────────────────────
+        - task_key: extract_precios
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
           min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
-          notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: precios } }
-        - task_key: bronze_dividendos
+          notebook_task: { notebook_path: ../proceso/2_extract_bronze.py, base_parameters: { fuente: precios } }
+        - task_key: extract_dividendos
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
-          min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
-          notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: dividendos } }
-        - task_key: bronze_catalogo
+          min_retry_interval_millis: 120000
+          notebook_task: { notebook_path: ../proceso/2_extract_bronze.py, base_parameters: { fuente: dividendos } }
+        - task_key: extract_catalogo
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
-          min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
-          notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: catalogo } }
-        - task_key: bronze_mapa_futuros
+          min_retry_interval_millis: 120000
+          notebook_task: { notebook_path: ../proceso/2_extract_bronze.py, base_parameters: { fuente: catalogo } }
+        - task_key: extract_mapa_futuros
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
-          min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
-          notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: mapa_futuros } }
-        - task_key: bronze_operaciones
+          min_retry_interval_millis: 120000
+          notebook_task: { notebook_path: ../proceso/2_extract_bronze.py, base_parameters: { fuente: mapa_futuros } }
+        - task_key: extract_operaciones
           depends_on: [ { task_key: preparacion_ambiente } ]
           job_cluster_key: etl
           max_retries: 2
-          min_retry_interval_millis: 120000   # espera 2 min: los reintentos solo sirven ante fallas de plataforma o insumos
-          notebook_task: { notebook_path: ../notebooks/01_bronze/ingesta_bronze.py, base_parameters: { fuente: operaciones } }
+          min_retry_interval_millis: 120000
+          notebook_task: { notebook_path: ../proceso/2_extract_bronze.py, base_parameters: { fuente: operaciones } }
 
-        - task_key: silver_mercado
+        # ── 3 · Transform ───────────────────────────────────────────────────────────────────────────
+        - task_key: transform_mercado
           run_if: ALL_SUCCESS
-          depends_on: [ { task_key: bronze_precios }, { task_key: bronze_dividendos }, { task_key: bronze_catalogo } ]
+          depends_on: [ { task_key: extract_precios }, { task_key: extract_dividendos }, { task_key: extract_catalogo } ]
           job_cluster_key: etl
-          notebook_task: { notebook_path: ../notebooks/02_silver/silver_mercado.py }
-        - task_key: silver_operaciones
+          notebook_task: { notebook_path: ../proceso/3_transform_silver_mercado.py }
+        - task_key: transform_operaciones
           run_if: ALL_SUCCESS
-          depends_on: [ { task_key: silver_mercado }, { task_key: bronze_operaciones }, { task_key: bronze_mapa_futuros } ]
+          depends_on: [ { task_key: transform_mercado }, { task_key: extract_operaciones }, { task_key: extract_mapa_futuros } ]
           job_cluster_key: etl
-          notebook_task: { notebook_path: ../notebooks/02_silver/silver_operaciones.py }
+          notebook_task: { notebook_path: ../proceso/3_transform_silver_operaciones.py }
 
-        - task_key: gold_kpis
+        # ── 4 · Load ────────────────────────────────────────────────────────────────────────────────
+        - task_key: load_gold
           run_if: ALL_SUCCESS
-          depends_on: [ { task_key: silver_operaciones } ]
+          depends_on: [ { task_key: transform_operaciones } ]
           job_cluster_key: etl
-          notebook_task: { notebook_path: ../notebooks/03_gold/gold_kpis.py }
+          notebook_task: { notebook_path: ../proceso/4_load_gold_kpis.py }
 
-        - task_key: controles_calidad
+        - task_key: load_controles_calidad      # si una regla crítica falla, no se exporta ni se otorgan permisos
           run_if: ALL_SUCCESS
-          depends_on: [ { task_key: gold_kpis } ]
+          depends_on: [ { task_key: load_gold } ]
           job_cluster_key: etl
-          notebook_task: { notebook_path: ../notebooks/04_calidad/controles_calidad.py }
+          notebook_task: { notebook_path: ../proceso/4_load_controles_calidad.py }
 
-        - task_key: mantenimiento_delta
+        - task_key: load_mantenimiento_delta
           run_if: ALL_SUCCESS
-          depends_on: [ { task_key: controles_calidad } ]
+          depends_on: [ { task_key: load_controles_calidad } ]
           job_cluster_key: etl
-          notebook_task: { notebook_path: ../notebooks/04_calidad/mantenimiento_delta.py }
+          notebook_task: { notebook_path: ../proceso/4_load_mantenimiento_delta.py }
 
-        - task_key: exportar_base_transaccional
+        - task_key: load_base_transaccional
           run_if: ALL_SUCCESS
-          depends_on: [ { task_key: controles_calidad } ]
+          depends_on: [ { task_key: load_controles_calidad } ]
           job_cluster_key: etl
           libraries:
             - maven: { coordinates: "com.microsoft.sqlserver:mssql-jdbc:12.6.1.jre11" }
             - maven: { coordinates: "org.postgresql:postgresql:42.7.3" }
-          notebook_task: { notebook_path: ../notebooks/05_servir/exportar_base_transaccional.py, base_parameters: { motor: azuresql } }
+          notebook_task: { notebook_path: ../proceso/4_load_base_transaccional.py, base_parameters: { motor: azuresql } }
+
+        # ── 5 · Grants ──────────────────────────────────────────────────────────────────────────────
+        - task_key: grants
+          run_if: ALL_SUCCESS
+          depends_on: [ { task_key: load_mantenimiento_delta }, { task_key: load_base_transaccional } ]
+          job_cluster_key: etl
+          notebook_task: { notebook_path: ../proceso/5_grants.py }

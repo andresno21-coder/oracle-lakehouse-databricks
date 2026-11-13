@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 01 · Bronze · Ingesta incremental desde ADLS (PySpark)
+# MAGIC # 2 · Extract · Bronze: ingesta incremental desde ADLS (PySpark)
 # MAGIC Lee una fuente de la capa **raw** en ADLS y la agrega a su tabla Delta de bronze.
 # MAGIC
 # MAGIC - **Un notebook, cinco fuentes:** el parámetro `fuente` elige qué leer; el Job lanza las cinco tareas en paralelo.
@@ -10,7 +10,7 @@
 
 # COMMAND ----------
 
-# MAGIC %run ../_comun
+# MAGIC %run ./_comun
 
 # COMMAND ----------
 
@@ -48,7 +48,7 @@ df = (lector.load(f"{RUTA_RAW}/{ruta}")
             .withColumn("_archivo_modificado", F.col("_metadata.file_modification_time")))
 df = tr.agregar_auditoria(df, FUENTE)
 
-destino = tabla("bronze", FUENTE)   # tabla externa creada por 00_preparacion_ambiente
+destino = tabla("bronze", FUENTE)   # tabla externa creada por 1_preparacion_ambiente
 ya = spark.table(destino).select("_archivo_origen", "_archivo_modificado").distinct()
 df = df.join(ya, ["_archivo_origen", "_archivo_modificado"], "left_anti")
 
