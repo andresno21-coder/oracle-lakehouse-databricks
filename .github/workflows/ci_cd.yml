@@ -115,7 +115,7 @@ jobs:
         if: always()
         run: |
           job_id=$(databricks bundle summary -t "$ENTORNO" -o json | jq -r '.resources.jobs.oracle_etl.id')
-          corrida=$(databricks jobs list-runs --job-id "$job_id" --limit 1 -o json | jq -r '(.runs // .)[0].run_id')
+          corrida=$(databricks jobs list-runs --job-id "$job_id" --limit 1 -o json | jq -r 'if type == "array" then .[0].run_id else .runs[0].run_id end')
           detalle=$(databricks jobs get-run "$corrida" -o json)
           {
             echo "## Workflow en Databricks ($ENTORNO)"
