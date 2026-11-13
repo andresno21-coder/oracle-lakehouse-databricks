@@ -14,6 +14,35 @@ Despliegue real del 29-oct-2026 en la suscripción de prueba del autor (región 
 | Base transaccional | Azure SQL Database `oracle` (oferta gratuita, Central US) |
 | Secret scope | `oracle-kv` (servidor, base, usuario y clave de la base) |
 
+## 0. CI/CD: despliegue y ejecución en producción desde GitHub Actions (13-nov-2026)
+`10_github_actions_despliegue_prod_ok.png`: corrida n.º 8 de `ci_cd.yml`, disparada por un push a `main`. Los tres
+jobs en verde (pruebas unitarias → validar el bundle → desplegar y ejecutar en Databricks, 18 min) y el resumen que
+el propio pipeline publica con el resultado de cada tarea del workflow.
+
+`11_workflow_prod_13_tareas_timeline.png` y `12_workflow_prod_grafo.png`: la corrida `948689476881535` del workflow
+`[prod] Oracle Lakehouse · ETL medallion` que lanzó ese pipeline: **13 de 13 tareas correctas en 16 min** sobre un
+clúster efímero de un nodo (`Standard_D4ds_v7`, ya terminado), con el catálogo `oracle_prd`.
+
+| Etapa | Tareas | Resultado |
+|---|---|---|
+| Preparación de ambiente | `preparacion_ambiente` | OK (10 min, incluye el arranque del clúster) |
+| Extract | `extract_precios`, `extract_dividendos`, `extract_catalogo`, `extract_mapa_futuros`, `extract_operaciones` | OK, en paralelo; 0 filas nuevas porque `raw` no cambió (ingesta idempotente) |
+| Transform | `transform_mercado`, `transform_operaciones` | OK |
+| Load | `load_gold`, `load_controles_calidad`, `load_base_transaccional`, `load_mantenimiento_delta` | OK |
+| Grants | `grants` | OK; filtro de fila y máscara repuestos en `gold.kpis_estrategias` |
+
+Después de la corrida: 19 tablas en `oracle_prd` (5 bronze, 4 silver, 5 gold, 5 control), todas `EXTERNAL`. La única
+regla de calidad que no se cumple es la alerta de frescura (16 días desde el último precio; umbral 5), que no es
+crítica: los insumos de `raw` llegan hasta el 28-oct-2026.
+
+`13_ubicaciones_externas_managed_identity.png`: las seis ubicaciones externas del proyecto, una por contenedor de
+`storacleinvestment`, todas con la credencial `cred_oracle_adls` (Managed Identity del Access Connector).
+
+Las corridas 5 a 7 del historial de Actions fallaron y documentan dos límites de Unity Catalog que el proceso ahora
+resuelve: una tabla con filtro de fila o máscara no admite sentencias con `LOCATION`, y el clúster dedicado del
+workflow no puede consultarla ni alterarla. Por eso la preparación omite las tablas existentes, la carga suspende la
+protección antes de reescribir y `grants` la repone siempre a través del SQL warehouse.
+
 ## 1. Workflow orquestado
 Las capturas de esta sección son de la corrida del 29-oct, anterior a la reorganización del repositorio: las tareas
 se llamaban `bronze_*`, `silver_*`, `gold_kpis`, `controles_calidad`, `mantenimiento_delta` y
