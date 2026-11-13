@@ -78,11 +78,17 @@ SQL se usa únicamente para DDL, permisos y reversión.
 1. **Pruebas unitarias** de las transformaciones con Spark local.
 2. **`databricks bundle validate`** del bundle de producción.
 3. **`databricks bundle deploy -t prod`**: sube la carpeta `proceso/` y crea o actualiza el workflow.
-4. Apaga cualquier clúster interactivo encendido: el workflow usa **un único clúster efímero**, que existe solo
+4. **Valida el workflow desplegado**: lista sus tareas, dependencias y clúster, y falla si alguna tarea no apunta a
+   un notebook de `proceso/`.
+5. Apaga cualquier clúster interactivo encendido: el workflow usa **un único clúster efímero**, que existe solo
    mientras dura la corrida de producción.
-5. **`databricks bundle run`**: ejecuta el workflow completo y espera el resultado. Si una tarea falla, el job de
+6. **`databricks bundle run`**: ejecuta el workflow completo y espera el resultado. Si una tarea falla, el job de
    Actions falla.
-6. Publica en el resumen de Actions el resultado y la duración de cada tarea.
+7. Publica en el resumen de Actions el resultado y la duración de cada tarea.
+
+Sigue el mismo recorrido del flujo visto en clase (desplegar, crear el workflow, validarlo, ejecutarlo y
+monitorearlo), pero con Asset Bundles en lugar de llamadas directas a la API: el workflow se declara en
+`resources/job_oracle_etl.yml` y el bundle lo crea o actualiza sin borrarlo, así se conserva el historial de corridas.
 
 Dev y prod comparten workspace y se aíslan por catálogo (`oracle_dev` / `oracle_prd`) y por ruta del bundle. Los
 secretos del repositorio son `DATABRICKS_HOST` y `DATABRICKS_TOKEN`.
