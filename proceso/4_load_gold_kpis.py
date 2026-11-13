@@ -26,6 +26,7 @@ salidas = {
     "kpis_estrategias": tr.kpis_estrategias(operaciones),
     "senales_estrategias_base": tr.senales_estrategias_base(precios),
 }
+suspender_proteccion(tabla("gold", "kpis_estrategias"))     # la tarea `grants` la repone al final del workflow
 for nombre, df in salidas.items():
     destino = tabla("gold", nombre)
     escribir(df, destino, sobrescribir=True)

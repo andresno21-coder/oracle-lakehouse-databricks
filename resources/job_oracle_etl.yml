@@ -120,8 +120,9 @@ resources:
           notebook_task: { notebook_path: ../proceso/4_load_base_transaccional.py, base_parameters: { motor: azuresql } }
 
         # ── 5 · Grants ──────────────────────────────────────────────────────────────────────────────
+        # Se ejecuta siempre: si una tarea anterior falla, la protección de gold se repone igual.
         - task_key: grants
-          run_if: ALL_SUCCESS
+          run_if: ALL_DONE
           depends_on: [ { task_key: load_mantenimiento_delta }, { task_key: load_base_transaccional } ]
           job_cluster_key: etl
           notebook_task: { notebook_path: ../proceso/5_grants.py }

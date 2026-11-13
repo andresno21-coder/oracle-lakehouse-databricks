@@ -126,7 +126,14 @@ TABLAS = [
 # COMMAND ----------
 
 # DBTITLE 1,Creación de las tablas externas
+# Una tabla que ya existe no se toca: Unity Catalog rechaza cualquier sentencia con LOCATION sobre una tabla que
+# tiene filtro de fila o máscara de columna (gold.kpis_estrategias a partir de la segunda corrida).
+existentes = {(r.table_schema, r.table_name) for r in
+              spark.table(f"{CATALOGO}.information_schema.tables").select("table_schema", "table_name").collect()}
 for capa, nombre, columnas, particion in TABLAS:
+    if (capa, nombre) in existentes:
+        print(f"--  {CATALOGO}.{capa}.{nombre} ya existe")
+        continue
     particionado = f"PARTITIONED BY ({particion})" if particion else ""
     spark.sql(f"CREATE TABLE IF NOT EXISTS {CATALOGO}.{capa}.{nombre} ({columnas}) "
               f"USING DELTA {particionado} LOCATION '{ruta(capa, CATALOGO, nombre)}'")

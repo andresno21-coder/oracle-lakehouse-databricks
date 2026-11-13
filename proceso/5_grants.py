@@ -1,8 +1,9 @@
 # Databricks notebook source
 # MAGIC %md
 # MAGIC # 5 · Grants · Permisos por capa, filtro de filas y máscara de columna (Unity Catalog)
-# MAGIC Última tarea del workflow: después de cargar gold se (re)aplican los permisos, de modo que una tabla recreada nunca
-# MAGIC queda sin control de acceso. Es idempotente.
+# MAGIC Última tarea del workflow. La carga de gold suspende el filtro y la máscara de `kpis_estrategias` para poder
+# MAGIC reescribirla; aquí se reponen junto con los permisos. La tarea se ejecuta **siempre** (`run_if: ALL_DONE`), también
+# MAGIC cuando una tarea anterior falla, para que gold nunca quede sin control de acceso. Es idempotente.
 # MAGIC
 # MAGIC | Grupo de cuenta | Rol | bronze | silver | gold | control |
 # MAGIC |---|---|---|---|---|---|
