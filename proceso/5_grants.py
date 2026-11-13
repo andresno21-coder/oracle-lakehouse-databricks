@@ -18,8 +18,9 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("catalogo", "oracle_dev", "Catálogo del entorno")
-CATALOGO = dbutils.widgets.get("catalogo")
+# MAGIC %run ./_comun
+
+# COMMAND ----------
 
 INGENIEROS, ANALISTAS, CONSUMIDORES, AUDITORES = (
     "oi_ingenieros_datos", "oi_analistas_riesgo", "oi_consumidores_bi", "oi_auditores")
@@ -63,11 +64,17 @@ kpis = f"{CATALOGO}.gold.kpis_estrategias"
 
 spark.sql(f"""CREATE OR REPLACE FUNCTION {CATALOGO}.gold.filtro_familias(familia STRING)
   RETURN is_account_group_member('{INGENIEROS}') OR is_account_group_member('{ANALISTAS}') OR familia = 'F7'""")
-spark.sql(f"ALTER TABLE {kpis} SET ROW FILTER {CATALOGO}.gold.filtro_familias ON (familia)")
+# Las sentencias sobre una tabla protegida van por el SQL warehouse (ver ejecutar_en_warehouse en _comun)
+suspender_proteccion(kpis)
+ejecutar_en_warehouse(f"ALTER TABLE {kpis} SET ROW FILTER {CATALOGO}.gold.filtro_familias ON (familia)")
 
 spark.sql(f"""CREATE OR REPLACE FUNCTION {CATALOGO}.gold.mascara_usd(valor DOUBLE)
   RETURN CASE WHEN is_account_group_member('{CONSUMIDORES}') THEN NULL ELSE valor END""")
-spark.sql(f"ALTER TABLE {kpis} ALTER COLUMN usd_neto SET MASK {CATALOGO}.gold.mascara_usd")
+ejecutar_en_warehouse(f"ALTER TABLE {kpis} ALTER COLUMN usd_neto SET MASK {CATALOGO}.gold.mascara_usd")
+proteccion = ejecutar_en_warehouse(f"SELECT filter_name FROM {CATALOGO}.information_schema.row_filters "
+                                   f"WHERE table_schema = 'gold' AND table_name = 'kpis_estrategias'")
+assert proteccion, "gold.kpis_estrategias quedó sin filtro de fila"
+print("Filtro de fila vigente:", proteccion[0][0])
 
 # COMMAND ----------
 
