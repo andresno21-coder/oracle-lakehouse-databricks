@@ -27,6 +27,17 @@ def escribir(df, destino: str, sobrescribir: bool = False):
     columnas = spark.table(destino).columns
     df.select(*columnas).write.insertInto(destino, overwrite=sobrescribir)
 
+def suspender_proteccion(destino: str):
+    """Quita el filtro de fila y las máscaras de columna de una tabla antes de reescribirla.
+    El clúster del workflow no puede sobrescribir ni clonar una tabla protegida; la tarea final `grants`, que se
+    ejecuta siempre (run_if ALL_DONE), vuelve a aplicar la protección aunque una tarea intermedia falle."""
+    cat, esquema, nombre = destino.split(".")
+    cond = f"table_schema = '{esquema}' AND table_name = '{nombre}'"
+    if spark.table(f"{cat}.information_schema.row_filters").filter(cond).count():
+        spark.sql(f"ALTER TABLE {destino} DROP ROW FILTER")
+    for r in spark.table(f"{cat}.information_schema.column_masks").filter(cond).select("column_name").collect():
+        spark.sql(f"ALTER TABLE {destino} ALTER COLUMN {r.column_name} DROP MASK")
+
 def registrar_ejecucion(paso: str, tabla_destino: str, filas: int, estado: str = "OK", detalle: str = ""):
     """Bitácora de ejecuciones en control.ejecuciones (append)."""
     fila = [(dt.datetime.utcnow(), paso, tabla_destino, int(filas), estado, detalle)]
