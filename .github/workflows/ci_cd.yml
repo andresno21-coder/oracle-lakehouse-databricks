@@ -87,6 +87,18 @@ jobs:
           echo "Carpeta en el workspace: $raiz/proceso"
           databricks workspace list "$raiz/proceso" -o json | jq -r '.[] | "\(.object_type)\t\(.path)"'
 
+      - name: Validar la configuración del workflow desplegado
+        run: |
+          job_id=$(databricks bundle summary -t "$ENTORNO" -o json | jq -r '.resources.jobs.oracle_etl.id')
+          config=$(databricks jobs get "$job_id" -o json)
+          echo "Workflow: $(echo "$config" | jq -r '.settings.name') (job $job_id)"
+          echo "Tareas: $(echo "$config" | jq '.settings.tasks | length')"
+          echo "$config" | jq -r '.settings.tasks[] | "- \(.task_key) → \(.notebook_task.notebook_path) [depende de: \([.depends_on[]?.task_key] | join(", "))]"'
+          echo "Clúster: $(echo "$config" | jq -r '.settings.job_clusters[0].new_cluster | "\(.node_type_id), \(.num_workers) workers, Spark \(.spark_version)"')"
+          # Todas las tareas deben apuntar a notebooks de la carpeta proceso/
+          fuera=$(echo "$config" | jq '[.settings.tasks[] | select(.notebook_task.notebook_path | contains("/proceso/") | not)] | length')
+          test "$fuera" -eq 0 || { echo "Hay $fuera tareas fuera de proceso/"; exit 1; }
+
       - name: Un solo clúster encendido
         run: |
           # El workflow usa un clúster efímero: antes de ejecutarlo no debe quedar ningún clúster interactivo encendido.
