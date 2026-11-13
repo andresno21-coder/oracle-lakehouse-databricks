@@ -115,7 +115,14 @@ secretos del repositorio son `DATABRICKS_HOST` y `DATABRICKS_TOKEN`.
 - **Databricks App** (`databricks-app/`): portal en Streamlit con su propio service principal de permisos mínimos.
 
 ## Ejecución en Azure
-El workflow corrió completo en Azure Databricks en dev y en prod: 18 tablas externas en ADLS, ingesta idempotente
+La última corrida de GitHub Actions desplegó `proceso/` en producción y ejecutó el workflow con **13 de 13 tareas
+correctas**:
+
+![GitHub Actions: despliegue y ejecución en producción](evidencias/10_github_actions_despliegue_prod_ok.png)
+
+![Workflow de producción](evidencias/11_workflow_prod_13_tareas_timeline.png)
+
+Resultado en Azure Databricks: 19 tablas externas en ADLS, ingesta idempotente
 (la segunda corrida carga 0 filas en bronze), exportación a Azure SQL, filtro de fila y máscara verificados por grupo,
 tablero publicado, Genie respondiendo, la app desplegada y el share leído desde fuera.
 Detalle, cifras y capturas en [`evidencias/`](evidencias/README.md).
