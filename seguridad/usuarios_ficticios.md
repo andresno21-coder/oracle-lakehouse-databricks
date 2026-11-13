@@ -14,4 +14,4 @@ y el grupo se asigna al workspace. No se usan correos reales: el dominio `oracle
 1. Iniciar sesión como `marta.bi` y ejecutar `SELECT * FROM oracle_dev.silver.precios_diarios` → **PERMISSION_DENIED**.
 2. Como `marta.bi`: `SELECT familia, usd_neto FROM oracle_dev.gold.kpis_estrategias` → solo filas `F7` y `usd_neto` en NULL.
 3. Como `luis.riesgo`: la misma consulta devuelve todas las familias con su USD neto.
-4. Guardar capturas de los tres resultados en `docs/evidencias/`.
+4. Guardar capturas de los tres resultados en `evidencias/`.

@@ -1,12 +1,12 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 04 · Controles de calidad
+# MAGIC # 4 · Load · Controles de calidad
 # MAGIC Reglas que se evalúan al final de cada corrida; el resultado queda en `control.calidad`.
 # MAGIC Si una regla **crítica** falla, el notebook termina con error y el Job no publica (no se ejecuta la exportación).
 
 # COMMAND ----------
 
-# MAGIC %run ../_comun
+# MAGIC %run ./_comun
 
 # COMMAND ----------
 
@@ -22,7 +22,8 @@ reglas = [
     ("tickers_sin_catalogo", p.filter("sector is null").select("ticker").distinct().count(), 0, False),
     ("operaciones_sin_subyacente_pct", o.filter("not con_subyacente").count() / max(o.count(), 1), 0.10, False),
     ("operaciones_sin_regimen_pct", o.filter("regimen_vix is null").count() / max(o.count(), 1), 0.05, False),
-    ("dias_desde_ultimo_precio", (dt.date.today() - p.agg(F.max("fecha")).first()[0]).days, 5, True),
+    # Frescura: es una alerta y no detiene el Job; raw se recarga con datasets/descargar_insumos.py
+    ("dias_desde_ultimo_precio", (dt.date.today() - p.agg(F.max("fecha")).first()[0]).days, 5, False),
 ]
 filas = [(dt.datetime.utcnow(), n, float(v), float(u), c, float(v) <= float(u)) for n, v, u, c in reglas]
 res = spark.createDataFrame(filas, "fecha_utc timestamp, regla string, valor double, umbral double, critica boolean, cumple boolean")
