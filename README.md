@@ -25,6 +25,7 @@ ventaja y en qué régimen de volatilidad?, ¿qué señales dan hoy las estrateg
 | [`PrepAmb/`](PrepAmb/) | Preparación del ambiente en SQL: ubicaciones externas, catálogo, esquemas y DDL de las 17 tablas externas. |
 | [`proceso/`](proceso/) | **Lo único que se despliega y ejecuta en producción**: notebooks PySpark de preparación, extract, transform, load y grants, y el paquete `oracle_lakehouse` con las transformaciones. |
 | [`seguridad/`](seguridad/) | Grupos, usuarios ficticios, grants por capa, filtro de fila, máscara de columna y Delta Sharing. |
+| [`delta-sharing/`](delta-sharing/) | Delta Sharing en PySpark: crea el share de gold y lo lee desde fuera de Databricks. |
 | [`reversion/`](reversion/) | Elimina las tablas lógicas (`DROP`) y las rutas físicas en ADLS. |
 | [`dashboard/`](dashboard/) | Tablero AI/BI (`.lvdash.json`), sus consultas, capturas `.png` y el espacio de Genie. |
 | [`databricks-app/`](databricks-app/) | Databricks App en Streamlit: panel de KPIs y autoservicio de solicitudes de acceso. |
@@ -104,8 +105,8 @@ secretos del repositorio son `DATABRICKS_HOST` y `DATABRICKS_TOKEN`.
   | `oi_consumidores_bi` | — | — | SELECT (solo F7, sin USD neto) | — |
   | `oi_auditores` | — | — | SELECT | SELECT |
 
-- **Delta Sharing** (`seguridad/02_delta_sharing.sql`): share `oracle_kpis_mercado` con un destinatario abierto;
-  `seguridad/leer_delta_sharing.py` lo consume desde fuera de Databricks.
+- **Delta Sharing** (`delta-sharing/01_compartir_gold.py`; en SQL, `seguridad/02_delta_sharing.sql`): share `oracle_kpis_mercado` con un destinatario abierto;
+  `delta-sharing/02_leer_share.py` lo consume desde fuera de Databricks.
 - **Reversión** (`reversion/`): pide confirmación explícita y nunca toca `raw`.
 
 ## Consumo

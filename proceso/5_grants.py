@@ -14,7 +14,7 @@
 # MAGIC
 # MAGIC Los grupos son **de cuenta** (Unity Catalog no reconoce los grupos locales del workspace) y sus usuarios son
 # MAGIC ficticios: ver `seguridad/usuarios_ficticios.md`. El mismo guion en SQL puro está en `seguridad/01_grupos_y_permisos.sql`
-# MAGIC y Delta Sharing en `seguridad/02_delta_sharing.sql`.
+# MAGIC y Delta Sharing en `delta-sharing/`.
 
 # COMMAND ----------
 

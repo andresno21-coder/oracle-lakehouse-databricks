@@ -68,7 +68,7 @@ manual antes de producción, agregar revisores obligatorios al environment `prod
 - App: `databricks apps create` con el recurso SQL warehouse, `databricks sync databricks-app <ruta>` y
   `databricks apps deploy oracle-portal --source-code-path <ruta>`. Al service principal de la app: `USE CATALOG`,
   `SELECT` en gold y `MODIFY` en `control.solicitudes_acceso`.
-- Delta Sharing: `seguridad/02_delta_sharing.sql`.
+- Delta Sharing: `delta-sharing/01_compartir_gold.py` (SQL: `seguridad/02_delta_sharing.sql`).
 
 ## Costos
 La suscripción de prueba tiene límite de gasto: no se cobra a la tarjeta. El SQL warehouse serverless se apaga solo a

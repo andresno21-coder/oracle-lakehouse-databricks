@@ -123,7 +123,7 @@ y las señales vigentes de las estrategias base leídos de `oracle_prd.gold`.
 `gold.kpis_sector_anual` (con historial) y `gold.panel_activos`; destinatario abierto `socio_research` con `SELECT`.
 El metastore quedó con alcance `INTERNAL_AND_EXTERNAL`. `09_delta_sharing_share.jpg`: el share con sus 3 activos.
 
-Lectura desde fuera de Databricks (`seguridad/leer_delta_sharing.py`, Python 3.11 local con `delta-sharing`, credencial
+Lectura desde fuera de Databricks (`delta-sharing/02_leer_share.py`, Python 3.11 local con `delta-sharing`, credencial
 descargada del enlace de activación y no versionada):
 
 | Tabla compartida | Filas leídas |
