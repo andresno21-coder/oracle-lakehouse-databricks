@@ -14,14 +14,15 @@ Despliegue real del 29-oct-2026 en la suscripción de prueba del autor (región 
 | Base transaccional | Azure SQL Database `oracle` (oferta gratuita, Central US) |
 | Secret scope | `oracle-kv` (servidor, base, usuario y clave de la base) |
 
-## 0. CI/CD: despliegue y ejecución en producción desde GitHub Actions (13-nov-2026)
-`10_github_actions_despliegue_prod_ok.png`: corrida n.º 8 de `ci_cd.yml`, disparada por un push a `main`. Los tres
-jobs en verde (pruebas unitarias → validar el bundle → desplegar y ejecutar en Databricks, 18 min) y el resumen que
-el propio pipeline publica con el resultado de cada tarea del workflow.
+## 0. CI/CD: despliegue y ejecución en producción desde GitHub Actions
+`10_github_actions_despliegue_prod_ok.png`: corrida n.º 9 de `ci_cd.yml` (15-nov-2026) sobre `main`. Los tres jobs en
+verde (pruebas unitarias → validar el bundle → desplegar y ejecutar en Databricks, 17 min) y el resumen que el propio
+pipeline publica con el resultado de cada tarea del workflow (corrida `743849012531241`, 13 de 13 tareas correctas).
 
-`11_workflow_prod_13_tareas_timeline.png` y `12_workflow_prod_grafo.png`: la corrida `948689476881535` del workflow
-`[prod] Oracle Lakehouse · ETL medallion` que lanzó ese pipeline: **13 de 13 tareas correctas en 16 min** sobre un
-clúster efímero de un nodo (`Standard_D4ds_v7`, ya terminado), con el catálogo `oracle_prd`.
+`11_workflow_prod_13_tareas_timeline.png` y `12_workflow_prod_grafo.png`: vista en Databricks de una corrida anterior
+del mismo workflow `[prod] Oracle Lakehouse · ETL medallion`, lanzada por este pipeline el 13-nov-2026 (corrida
+`948689476881535`): **13 de 13 tareas correctas en 16 min** sobre un clúster efímero de un nodo (`Standard_D4ds_v7`,
+ya terminado), con el catálogo `oracle_prd`.
 
 | Etapa | Tareas | Resultado |
 |---|---|---|
